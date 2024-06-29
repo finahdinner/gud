@@ -1,0 +1,3 @@
+Steps to manually get Gud working:
+- Add the directory containing the shell script (src/gud) to PATH ---> export PATH=$PATH:/home/hanif/gud/src
+    - This allows "gud" to work as a command, that will run the gud script as if you did ./gud
