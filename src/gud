@@ -8,4 +8,5 @@ SCRIPT_DIR=$(dirname "$0")
 DIR_PATH=$(realpath "$SCRIPT_DIR")
 PYTHON_FILE_PATH="$DIR_PATH/main.py"
 
-$PYTHON_INTERPRETER "$PYTHON_FILE_PATH"
+# run the python script with all the commands that were passed to this shell script
+$PYTHON_INTERPRETER "$PYTHON_FILE_PATH" "$@"
