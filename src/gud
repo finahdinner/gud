@@ -1,12 +1,3 @@
-#!/bin/bash
-
-# this shell script runs the main python script which contains all the coding logic
-
-PYTHON_INTERPRETER=$(which python3)
-
-SCRIPT_DIR=$(dirname "$0")
-DIR_PATH=$(realpath "$SCRIPT_DIR")
-PYTHON_FILE_PATH="$DIR_PATH/main.py"
-
-# run the python script with all the commands that were passed to this shell script
-$PYTHON_INTERPRETER "$PYTHON_FILE_PATH" "$@"
+#!/usr/bin/env python3
+from main import main
+main()
