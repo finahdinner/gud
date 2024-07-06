@@ -1,3 +1,12 @@
-#!/usr/bin/env python3
-from main import main
-main()
+#!/bin/bash
+
+# activate the venv so it uses all relevant pip installs
+source "$HOME/gud/venv/bin/activate"
+
+# file path to the entry script
+SCRIPT_DIR=$(dirname "$0")
+DIR_PATH=$(realpath "$SCRIPT_DIR")
+PYTHON_FILE_PATH="$DIR_PATH/main.py"
+
+# run the main script
+python "$PYTHON_FILE_PATH" "$@"
