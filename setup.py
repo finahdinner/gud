@@ -4,12 +4,12 @@ with open("README.md", "r") as f:
     description = f.read()
 
 setup(
-    name="secondpackage",
-    version="0.4",
+    name="gud",
+    version="0.1",
     packages=find_packages(),
     install_requires=[
         "questionary==2.0.1",
-    ]
+    ],
     entry_points={
         "console_scripts": [
             "gud = gud:main"
