@@ -33,3 +33,13 @@ pip install setuptools wheel twine
 # do these each time you want to update the package and pip install it
 python setup.py sdist bdist_wheel
 pip install dist/<package>.whl
+
+
+
+-- Docker --
+
+# each time you change the code
+docker build -t gud-dev .
+
+# running the container with an interactive shell
+docker run -it gud-dev sh
