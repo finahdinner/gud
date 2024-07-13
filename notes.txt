@@ -23,3 +23,13 @@ Useful notes:
 
 Sticking points:
 - How should the user install this?
+
+
+-- Bundling this as a package: --
+
+# do this only once
+pip install setuptools wheel twine
+
+# do these each time you want to update the package and pip install it
+python setup.py sdist bdist_wheel
+pip install dist/<package>.whl

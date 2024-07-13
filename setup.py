@@ -18,8 +18,3 @@ setup(
     long_description=description,
     long_description_content_type="text/markdown"
 )
-
-
-
-
-packages=['pipenv',],
