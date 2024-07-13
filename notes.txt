@@ -9,3 +9,13 @@ Ideas:
 - Have an in-built means to locate all/local other gud repositories. In the event that a user is
 in the wrong directory when trying to use gud commands.
     - Something like: "You are not in a Gud directory. Maybe you thought you were in <file_path_to_nearest_gud_dir>?"
+
+
+gud init
+- use "questionary" (https://pypi.org/project/questionary/) for the interactive selection screen(s)
+
+
+
+Useful notes:
+- `with open()...` will open a file relative to the working directory where the initial script was invoked
+    - NOT necessarily the directory where the (imported) module lies

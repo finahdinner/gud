@@ -1,0 +1,5 @@
+README.md
+.gitignore
+notes.txt
+venv/
+__pycache__/
