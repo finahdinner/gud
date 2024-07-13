@@ -19,3 +19,7 @@ gud init
 Useful notes:
 - `with open()...` will open a file relative to the working directory where the initial script was invoked
     - NOT necessarily the directory where the (imported) module lies
+
+
+Sticking points:
+- How should the user install this?
