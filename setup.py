@@ -4,7 +4,7 @@ with open("README.md", "r") as f:
     description = f.read()
 
 setup(
-    name="gud",
+    name="gud_finahdinner",
     version="0.1",
     packages=find_packages(),
     install_requires=[
