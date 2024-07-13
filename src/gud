@@ -1,7 +1,12 @@
 #!/bin/bash
 
+source "usr/local/bin/venv/bin/activate"
+python "usr/local/bin/gud/src/main.py" "$@"
+
+####
+
 # activate the venv so it uses all relevant pip installs
-source "$HOME/gud/venv/bin/activate"
+source "usr/local/bin/venv/bin/activate"
 
 # file path to the entry script
 SCRIPT_DIR=$(dirname "$0")
