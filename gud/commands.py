@@ -5,10 +5,13 @@ import os
 import sys
 import questionary
 
+
 executed_from = os.getcwd()
+
 
 def hello():
     print("Hello there.")
+
 
 def init():
     # make .gud directory
@@ -23,7 +26,4 @@ def init():
             "Would you like autosave?"
         ).ask()
         
-
-
-
     print(f"Initialising Gud repository in {executed_from}/.gud")

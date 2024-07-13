@@ -1,9 +1,10 @@
 import argparse
 import sys
-from commands import (
+from .commands import (
     init,
     hello,
 )
+
 
 parser = argparse.ArgumentParser(
     description="Functionality for parsing Gud commands.",
