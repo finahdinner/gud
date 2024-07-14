@@ -5,16 +5,23 @@ import os
 import sys
 import questionary
 
+from .run import CommandInvocation
+
 
 executed_from = os.getcwd()
 
 
-def hello():
-    print("Hello there.")
+def hello(invocation: CommandInvocation):
+    name = invocation.args.get("name")
+    if name:
+        print(f"Hello {name}!")
+    else:
+        print("Hello there.")
 
 
-def init():
+def init(invocation: CommandInvocation):
     # make .gud directory
+    # TODO - only make the .gud folder (with its contents) once the user has gone through all the questions
     try:
         os.makedirs(".gud", exist_ok=False)
     except FileExistsError:
