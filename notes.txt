@@ -34,7 +34,8 @@ pip install setuptools wheel twine
 python setup.py sdist bdist_wheel
 pip install dist/<package>.whl
 
-
+## quick command for the above two
+python setup.py sdist bdist_wheel && pip install dist/gud_finahdinner-0.1-py3-none-any.whl --force-reinstall
 
 -- Docker --
 
