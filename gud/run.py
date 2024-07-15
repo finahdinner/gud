@@ -56,7 +56,7 @@ class Repository:
         config["core"] = {
             "autosave": "false"
         }
-        with open(self.config_path, "r") as f:
+        with open(self.config_path, "w") as f:
             config.write(f)
         return config
     
@@ -75,7 +75,7 @@ class Repository:
         config = configparser.ConfigParser()
         for section in config_options:
             config[section] = config_options[section]
-        with open(self.config_path, "r") as f:
+        with open(self.config_path, "w") as f:
             config.write(f)
         return config
         
