@@ -5,13 +5,10 @@ import os
 import sys
 import questionary
 
-from .run import CommandInvocation
 
 
-executed_from = os.getcwd()
 
-
-def hello(invocation: CommandInvocation):
+def hello(invocation):
     name = invocation.args.get("name")
     if name:
         print(f"Hello {name}!")
@@ -19,13 +16,13 @@ def hello(invocation: CommandInvocation):
         print("Hello there.")
 
 
-def init(invocation: CommandInvocation):
+def init(invocation):
     # make .gud directory
     # TODO - only make the .gud folder (with its contents) once the user has gone through all the questions
     try:
         os.makedirs(".gud", exist_ok=False)
     except FileExistsError:
-        sys.exit(f"Repository {executed_from}/.gud already exists")
+        sys.exit(f"Repository {cwd}/.gud already exists")
     # create a config file in .gud
     with open(".gud/config", "w", encoding="utf-8") as f:
         # Define the questions and prompt the user
@@ -33,4 +30,4 @@ def init(invocation: CommandInvocation):
             "Would you like autosave?"
         ).ask()
         
-    print(f"Initialising Gud repository in {executed_from}/.gud")
+    print(f"Initialising Gud repository in {cwd}/.gud")
