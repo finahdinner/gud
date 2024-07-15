@@ -1,5 +1,6 @@
 import argparse
 from argparse import Namespace
+import configparser
 import sys
 import os
 from os.path import realpath
@@ -43,11 +44,46 @@ class Repository:
             self.path = cwd
         else:
             self.path = __class__.find_repo_path(cwd)
-        self.config = self.load_config()
+        self.config_path = os.path.join(self.path, "config")
+        self.config = self.set_default_config()
 
+    def set_default_config(self):
+        config = configparser.ConfigParser()
+        # default config settings
+        config["user"] = {
+            "name": "default_user"
+        }
+        config["core"] = {
+            "autosave": "false"
+        }
+        with open(self.config_path, "r") as f:
+            config.write(f)
+        return config
+    
+    def set_config(self, config_options: dict):
+        """
+        example struction of config_options
+        config_options = {
+            <section1>: {
+                <option>: <value>
+            },
+            <section2>: {
+                <option>: <value>
+            },
+        }
+        """
+        config = configparser.ConfigParser()
+        for section in config_options:
+            config[section] = config_options[section]
+        with open(self.config_path, "r") as f:
+            config.write(f)
+        return config
+        
     def load_config(self):
-        # TODO - parge config file in ini format
-        config_path = os.path.join(self.path, "config")
+        config = configparser.ConfigParser()
+        with open(self.config_path, "r") as f:
+            config.read(f)
+        return config
 
     @staticmethod
     def find_repo_path(curr_path):
