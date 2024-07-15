@@ -2,6 +2,7 @@ import argparse
 from argparse import Namespace
 import sys
 import os
+from os.path import realpath
 from .commands import (
     init,
     hello,
@@ -22,15 +23,42 @@ init_subparser = subparsers.add_parser('init', help='Initialise repository')
 
 class CommandInvocation:
     def __init__(self, all_args: Namespace, cwd: str):
-        self.command: Namespace = all_args.command
-        self.args: Namespace = __class__.get_additional_commands(all_args)
-        self.cwd = cwd
+        self.command: str = all_args.command
+        self.args: dict = __class__.get_additional_commands(all_args)
+        if self.command == "init":
+            self.repo = Repository(cwd, make_new_repo=True)
+        else:
+            self.repo = Repository(cwd)
 
     @staticmethod
-    def get_additional_commands(args: Namespace) -> Namespace:
+    def get_additional_commands(args: Namespace) -> dict:
         args_dict = vars(args)
         args_dict.pop("command", None)
-        return Namespace(**args_dict)
+        return args_dict
+    
+
+class Repository:
+    def __init__(self, cwd: str, make_new_repo = False):
+        if make_new_repo:
+            self.path = cwd
+        else:
+            self.path = __class__.find_repo_path(cwd)
+        self.config = self.load_config()
+
+    def load_config(self):
+        # TODO - parge config file in ini format
+        config_path = os.path.join(self.path, "config")
+
+    @staticmethod
+    def find_repo_path(curr_path):
+        """ Recurse up the path tree to find the deepest .gud/ directory, if there is one """
+        while True:
+            parent_dir_path = realpath(os.path.dirname(curr_path))
+            if curr_path == parent_dir_path:
+                raise Exception("No gud repository found.")
+            if ".gud" in os.listdir(curr_path):
+                return curr_path
+            curr_path = parent_dir_path
 
 
 def main():
