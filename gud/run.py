@@ -4,6 +4,7 @@ import configparser
 import sys
 import os
 from os.path import realpath
+from datetime import datetime
 from .commands import (
     init,
     hello,
@@ -30,12 +31,20 @@ class CommandInvocation:
             self.repo = Repository(cwd, make_new_repo=True)
         else:
             self.repo = Repository(cwd)
+        self.timestamp = __class__.get_timestamp_aware()
 
     @staticmethod
     def get_additional_commands(args: Namespace) -> dict:
         args_dict = vars(args)
         args_dict.pop("command", None)
         return args_dict
+    
+    @staticmethod
+    def get_timestamp_aware() -> datetime:
+        local_time = datetime.now()
+        local_tz = local_time.astimezone().tzinfo
+        local_time_aware = local_time.replace(tzinfo=local_tz)
+        return local_time_aware
     
 
 class Repository:
