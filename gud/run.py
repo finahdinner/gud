@@ -7,6 +7,7 @@ from .commands import (
     hello,
 )
 
+
 parser = argparse.ArgumentParser(
     description="Functionality for parsing Gud commands.",
 )
