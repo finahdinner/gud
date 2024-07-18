@@ -41,9 +41,8 @@ class Repository:
         self.config_path = os.path.join(self.path, "config")
         self.config = self.get_config()
 
-    def set_default_config(self):
-        config = configparser.ConfigParser()
-        # default config settings
+    def get_default_config_options(self):
+        config = {}
         config["user"] = {
             "name": "default_user",
             "email": "no_email"
@@ -51,8 +50,6 @@ class Repository:
         config["repo"] = {
             "experience_level": "beginner"
         }
-        with open(self.config_path, "w") as f:
-            config.write(f)
         return config
     
     def create_repo(self):

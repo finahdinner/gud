@@ -17,38 +17,44 @@ def hello(invocation):
 
 
 def init(invocation):
-    if not invocation.repo.path:
+    if not invocation.repo.path: # this shouldn't happen
         raise Exception("Repository not created.")
     
-    config_options = {
-        "user": {},
-        "repo": {}
-    }
+    if invocation.args["skip"]:
 
-    experience_level = questionary.select(
-        "What is your level of experience with Git, Gud or other similar"
-        " version control software?",
-        ["Beginner", "Intermediate", "Advanced"]
-    ).ask()
-    config_options["repo"]["experience_level"] = experience_level.lower()
+        config_options = invocation.repo.get_default_config_options()
+        print("--skip flag provided: selecting default config options...")
 
-    username_prompt = "Username? (must be between 1 and 16 characters)"
-    while True:
-        username = questionary.text(username_prompt).ask()
-        if is_valid_username(username):
-            break
-        else:
-            username_prompt = "Invalid username, please try another (must be between 1 and 16 characters):"
-    config_options["user"]["name"] = username
+    else:
+        config_options = {
+            "user": {},
+            "repo": {}
+        }
 
-    email_prompt = "Email address?"
-    while True:
-        email_address = questionary.text(email_prompt).ask()
-        if is_valid_email(email_address):
-            break
-        else:
-            email_prompt = "Invalid email address, please try another:"
-    config_options["user"]["email"] = email_address
+        experience_level = questionary.select(
+            "What is your level of experience with Git, Gud or other similar"
+            " version control software?",
+            ["Beginner", "Intermediate", "Advanced"]
+        ).ask()
+        config_options["repo"]["experience_level"] = experience_level.lower()
+
+        username_prompt = "Username? (must be between 1 and 16 characters)"
+        while True:
+            username = questionary.text(username_prompt).ask()
+            if is_valid_username(username):
+                break
+            else:
+                username_prompt = "Invalid username, please try another (must be between 1 and 16 characters):"
+        config_options["user"]["name"] = username
+
+        email_prompt = "Email address?"
+        while True:
+            email_address = questionary.text(email_prompt).ask()
+            if is_valid_email(email_address):
+                break
+            else:
+                email_prompt = "Invalid email address, please try another:"
+        config_options["user"]["email"] = email_address
     
     invocation.repo.create_repo()
     invocation.repo.set_config(config_options)
