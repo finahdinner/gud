@@ -17,8 +17,6 @@ def hello(invocation):
 
 
 def init(invocation):
-    if not invocation.repo.path: # this shouldn't happen
-        raise Exception("Repository not created.")
     
     if invocation.args["skip"]:
 
@@ -59,3 +57,22 @@ def init(invocation):
     invocation.repo.create_repo()
     invocation.repo.set_config(config_options)
     print(f"Initialised Gud repository in {invocation.repo.path}")
+
+
+def config(invocation):
+
+    if not (invocation.args["view"] or invocation.args["edit"]):
+
+        # if the --default flag is passed, but neither --view nor --edit is specified, this is invalid usage
+        if invocation.args["default"]:
+            sys.exit("Since you provided a --default flag, you must also provide either a --view or --edit flag.")
+
+        # otherwise, this means no flags were provided
+        # therefore, take them through a questionary prompt
+        print("You provided no flags!")
+
+    else:
+
+        print("You provided flags!")
+    
+    print(invocation.args)
