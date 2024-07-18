@@ -19,6 +19,7 @@ hello_subparser = subparsers.add_parser('hello', help='Say hello') # remove this
 hello_subparser.add_argument("name", nargs="?", help="Name to greet")
 
 init_subparser = subparsers.add_parser('init', help='Initialise repository')
+init_subparser.add_argument("--skip", "-s", action="store_true", help="Skip the interactive prompt and use default values")
 
 
 def main():
