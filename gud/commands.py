@@ -61,7 +61,7 @@ def init(invocation):
 
 def config(invocation):
 
-    if not (invocation.args["view"] or invocation.args["edit"]):
+    if not invocation.args["view"] and not invocation.args["edit"]:
 
         # if the --default flag is passed, but neither --view nor --edit is specified, this is invalid usage
         if invocation.args["default"]:
@@ -73,6 +73,17 @@ def config(invocation):
 
     else:
 
-        print("You provided flags!")
-    
-    print(invocation.args)
+        if invocation.args["default"]:
+            config_path = invocation.repo.config_path # TODO - change this to wherever the defaults will get stored
+            heading_string = "Default config options:"
+        else:
+            config_path = invocation.repo.config_path
+            heading_string = f"Repository config options ({config_path}):"
+
+        if invocation.args["view"]:
+            print(heading_string, "\n")
+            with open(config_path, "r", encoding="utf-8") as f:
+                print(f.read())
+        elif invocation.args["edit"]:
+            # TODO - do something relating to editing the config file
+            ...
