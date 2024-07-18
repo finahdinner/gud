@@ -5,7 +5,11 @@ import os
 import sys
 import questionary
 
-from .helpers import is_valid_username, is_valid_email
+from .helpers import (
+    is_valid_username,
+    is_valid_email,
+    get_default_config_file_path,
+)
 
 
 def hello(invocation):
@@ -94,9 +98,8 @@ def config(invocation):
         heading_string = f"Repository config options ({config_path}):"
 
     if view_or_edit == "edit":
-        # TODO - do something relating to editing the config file
-        # On Windows, I may need to figure out how to open notepad
-        ...
+        config_path = get_default_config_file_path()
+        print("Default config path: ", config_path)
     else:
         print(heading_string, "\n")
         with open(config_path, "r", encoding="utf-8") as f:

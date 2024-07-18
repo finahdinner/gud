@@ -4,6 +4,7 @@ import os
 import sys
 from os.path import realpath
 from datetime import datetime
+from .helpers import get_default_config_file_path, get_global_config_file_path
 
 
 class CommandInvocation:
@@ -40,17 +41,21 @@ class Repository:
             self.path = __class__.find_repo_path(cwd)
         self.config_path = os.path.join(self.path, "config")
         self.config = self.get_config()
+        self.global_config = self.get_global_config_options()
 
-    def get_default_config_options(self):
-        config = {}
-        config["user"] = {
-            "name": "default_user",
-            "email": "no_email"
-        }
-        config["repo"] = {
-            "experience_level": "beginner"
-        }
-        return config
+    def set_default_config_options(self):
+        default_config_path = get_default_config_file_path()
+        if not default_config_path:
+            raise Exception("Could not find default config file in installation package.")
+        default_config_options = dict(self.get_config())
+        self.set_config(default_config_options)
+
+    def get_global_config_options(self):
+        config_path = get_global_config_file_path()
+        if not config_path:
+            raise Exception("Could not find global config file.")
+        config_options = dict(self.get_config())
+        return config_options
     
     def create_repo(self):
         try:
@@ -76,10 +81,11 @@ class Repository:
         with open(self.config_path, "w") as f:
             config.write(f)
         
-    def get_config(self):
+    def get_config(self, specified_path=None):
         config = configparser.ConfigParser()
+        config_file_path = specified_path if specified_path else self.config_path
         try:
-            with open(self.config_path, "r") as f:
+            with open(config_file_path, "r") as f:
                 config.read(f)
         except FileNotFoundError:
             pass # will then return an empty config object
