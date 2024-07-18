@@ -17,17 +17,27 @@ def hello(invocation):
 
 
 def init(invocation):
-    # make .gud directory
-    # TODO - only make the .gud folder (with its contents) once the user has gone through all the questions
-    try:
-        os.makedirs(".gud", exist_ok=False)
-    except FileExistsError:
-        sys.exit(f"Repository {cwd}/.gud already exists")
-    # create a config file in .gud
-    with open(".gud/config", "w", encoding="utf-8") as f:
-        # Define the questions and prompt the user
-        autosave = questionary.confirm(
-            "Would you like autosave?"
-        ).ask()
-        
-    print(f"Initialising Gud repository in {cwd}/.gud")
+    if not invocation.repo.path:
+        raise Exception("Repository not created.")
+    config_options = {
+        "user": {},
+        "repo": {}
+    }
+    experience_level = questionary.select(
+        "What is your level of experience with Git, Gud or other similar"
+        " version control software?",
+        ["Beginner", "Intermediate", "Advanced"]
+    ).ask()
+    config_options["repo"]["experience_level"] = experience_level.lower()
+    username = questionary.text(
+        "Username?"
+    ).ask()
+    config_options["user"]["name"] = username
+    email_address = questionary.text(
+        "Email address?"
+    ).ask()
+    config_options["user"]["email"] = email_address
+    # TODO - check email and username validity
+    invocation.repo.create_repo()
+    invocation.repo.set_config(config_options)
+    print(f"Initialised Gud repository in {invocation.repo.path}")
