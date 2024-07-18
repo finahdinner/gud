@@ -1,0 +1,6 @@
+[user]
+name = default_user
+email = no_email
+
+[repo]
+experience_level = beginner
