@@ -5,6 +5,7 @@ from .classes import CommandInvocation
 from .commands import (
     init,
     hello,
+    config,
 )
 
 
@@ -22,7 +23,16 @@ init_subparser = subparsers.add_parser('init', help='Initialise repository')
 init_subparser.add_argument("--skip", "-s", action="store_true", help="Skip the interactive prompt and use default values")
 
 
+config_subparser = subparsers.add_parser('config', help="View or edit configuration options")
+view_or_edit = config_subparser.add_mutually_exclusive_group(required=False)
+view_or_edit.add_argument("--view", "-v", action="store_true", help="View configuration options")
+view_or_edit.add_argument("--edit", "-e", action="store_true", help="Edit configuration options")
+repo_or_default = config_subparser.add_mutually_exclusive_group(required=False)
+repo_or_default.add_argument("--default", "-d", action="store_true", help="Access the default configuration options")
+
+
 def main():
+    
     all_args = parser.parse_args(sys.argv[1:])
     cwd = os.getcwd()
     invocation = CommandInvocation(all_args, cwd)
@@ -32,6 +42,8 @@ def main():
             hello(invocation)
         case "init":
             init(invocation)
+        case "config":
+            config(invocation)
 
 
 if __name__ == "__main__":
