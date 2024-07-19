@@ -7,9 +7,9 @@ import questionary
 
 from .helpers import (
     is_valid_username,
-    is_valid_email,
-    get_default_config_file_path,
+    is_valid_email
 )
+from .config import get_default_config_file_path
 
 
 def hello(invocation):
