@@ -35,7 +35,7 @@ def init(invocation):
 
         experience_level = questionary.select(
             "What is your level of experience with Git, Gud or other similar"
-            " version control software?",
+            " version control softwares?",
             ["Beginner", "Intermediate", "Advanced"]
         ).ask()
         config_options["repo"]["experience_level"] = experience_level.lower()
