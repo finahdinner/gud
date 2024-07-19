@@ -1,6 +1,7 @@
 import argparse
 import sys
 import os
+from .config import setup_global_config
 from .classes import CommandInvocation
 from .commands import (
     init,
@@ -32,6 +33,8 @@ repo_or_default.add_argument("--default", "-d", action="store_true", help="Acces
 
 
 def main():
+
+    setup_global_config() # does nothing if global config already exists
     
     all_args = parser.parse_args(sys.argv[1:])
     cwd = os.getcwd()
