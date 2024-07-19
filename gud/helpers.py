@@ -16,6 +16,3 @@ def is_valid_email(email) -> bool:
     regex_pattern = r"^\w+@[a-zA-Z]+\.[a-zA-Z]+$"
     results = re.search(regex_pattern, email)
     return results is not None
-
-
-def get_global_config_file_path

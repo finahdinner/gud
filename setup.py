@@ -10,6 +10,10 @@ setup(
     install_requires=[
         "questionary==2.0.1",
     ],
+    include_package_data=True,
+    package_data={
+        'gud': ['defaults/config'],
+    },
     entry_points={
         "console_scripts": [
             "gud = gud:main"

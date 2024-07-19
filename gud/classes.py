@@ -4,7 +4,10 @@ import os
 import sys
 from os.path import realpath
 from datetime import datetime
-from .helpers import get_default_config_file_path, get_global_config_file_path
+from .config import (
+    GlobalConfig,
+    get_default_config_file_path
+)
 
 
 class CommandInvocation:
@@ -41,7 +44,7 @@ class Repository:
             self.path = __class__.find_repo_path(cwd)
         self.config_path = os.path.join(self.path, "config")
         self.config = self.get_config()
-        self.global_config = self.get_global_config_options()
+        self.global_config = GlobalConfig()
 
     def set_default_config_options(self):
         default_config_path = get_default_config_file_path()
@@ -49,13 +52,6 @@ class Repository:
             raise Exception("Could not find default config file in installation package.")
         default_config_options = dict(self.get_config())
         self.set_config(default_config_options)
-
-    def get_global_config_options(self):
-        config_path = get_global_config_file_path()
-        if not config_path:
-            raise Exception("Could not find global config file.")
-        config_options = dict(self.get_config())
-        return config_options
     
     def create_repo(self):
         try:
