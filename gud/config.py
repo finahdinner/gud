@@ -5,14 +5,6 @@ from os.path import realpath
 from configparser import ConfigParser
 
 
-class Config:
-    def __init__(self, repo_path):
-        self.repo_config = RepoConfig(repo_path=repo_path)
-        self.global_config = GlobalConfig()
-
-    
-
-
 class RepoConfig:
     """
     Configuration options for a specific repository.
