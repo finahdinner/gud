@@ -59,7 +59,7 @@ def init(invocation):
         repo_config["user"]["email"] = email_address
     
     invocation.repo.create_repo()
-    invocation.repo.config.repo_config.set_config(repo_config) # how many dots do I need?!
+    invocation.repo.repo_config.set_config(repo_config)
     print(f"Initialised Gud repository in {invocation.repo.path}")
 
 

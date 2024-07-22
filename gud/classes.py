@@ -3,8 +3,10 @@ import os
 import sys
 from os.path import realpath
 from datetime import datetime
+from configparser import ConfigParser
 from .config import (
-    Config
+    GlobalConfig,
+    RepoConfig,
 )
 
 
@@ -40,7 +42,12 @@ class Repository:
             self.path = f"{cwd}/.gud"
         else:
             self.path = __class__.find_repo_path(cwd)
-        self.config = Config(repo_path=self.path)
+
+        self.global_config = GlobalConfig()
+        self.repo_config = RepoConfig(repo_path=self.path)
+
+        # the "effective" config - combination of global and repo-specific settings
+        self.config = self.resolve_working_config()
 
     def create_repo(self) -> None:
         """
@@ -51,13 +58,30 @@ class Repository:
         except FileExistsError:
             sys.exit(f"Repository {self.path} already exists.")
 
+    def resolve_working_config(self) -> ConfigParser:
+        """
+        Combine the global config and repo-specific config settings
+        into a single config entity.
+        """
+        working_config = ConfigParser()
+        global_config = self.global_config.get_config()
+        repo_config = self.repo_config.get_config()
+        configs_to_load = [global_config, repo_config]
+        for cnf in configs_to_load:
+            for section in cnf.sections():
+                if not working_config.has_section(section):
+                    working_config.add_section(section)
+                for key, value in cnf.items(section):
+                    working_config[section][key] = value
+        return working_config
+
     def copy_global_to_repo_config(self, provided_options: dict|None = None) -> None:
         """
         Set the repo's config to same as the global config.
         Probably needs to bit of additional functionality eventually.
         """
-        global_config = self.config.global_config.get_config()
-        self.config.repo_config.set_config(global_config)
+        global_config = self.global_config.get_config()
+        self.repo_config.set_config(global_config)
 
     @staticmethod
     def find_repo_path(curr_path) -> str:
