@@ -47,7 +47,8 @@ class Repository:
         self.repo_config = RepoConfig(repo_path=self.path)
 
         # the "effective" config - combination of global and repo-specific settings
-        self.config = self.resolve_working_config()
+        if repo_exists:
+            self.config = self.resolve_working_config()
 
     def create_repo(self) -> None:
         """
