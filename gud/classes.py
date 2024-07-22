@@ -4,8 +4,7 @@ import sys
 from os.path import realpath
 from datetime import datetime
 from .config import (
-    RepoConfig,
-    GlobalConfig
+    Config
 )
 
 
@@ -41,8 +40,7 @@ class Repository:
             self.path = f"{cwd}/.gud"
         else:
             self.path = __class__.find_repo_path(cwd)
-        self.repo_config = RepoConfig(repo_path=self.path)
-        self.global_config = GlobalConfig()
+        self.config = Config(repo_path=self.path)
 
     def create_repo(self) -> None:
         """
@@ -58,8 +56,8 @@ class Repository:
         Set the repo's config to same as the global config.
         Probably needs to bit of additional functionality eventually.
         """
-        global_config = self.global_config.get_global_config()
-        self.repo_config.set_config(global_config)
+        global_config = self.config.global_config.get_config()
+        self.config.repo_config.set_config(global_config)
 
     @staticmethod
     def find_repo_path(curr_path) -> str:

@@ -1,9 +1,9 @@
 """
 All of these are commands that will ultimately be used as `gud <command_name>`
 """
-import os
 import sys
 import questionary
+from configparser import ConfigParser
 
 from .helpers import (
     is_valid_username,
@@ -22,23 +22,23 @@ def hello(invocation):
 
 def init(invocation):
     
-    if invocation.args["skip"]:
+    if invocation.args["global_config"]:
 
-        config_options = invocation.repo.get_default_config_options()
-        print("--skip flag provided: selecting default config options...")
+        repo_config = invocation.repo.copy_global_to_repo_config()
+        print("--global-config flag provided: using global config options...")
 
     else:
-        config_options = {
-            "user": {},
-            "repo": {}
-        }
+
+        repo_config = ConfigParser()
+        repo_config.add_section("user")
+        repo_config.add_section("repo")
 
         experience_level = questionary.select(
             "What is your level of experience with Git, Gud or other similar"
             " version control softwares?",
             ["Beginner", "Intermediate", "Advanced"]
         ).ask()
-        config_options["repo"]["experience_level"] = experience_level.lower()
+        repo_config["repo"]["experience_level"] = experience_level.lower()
 
         username_prompt = "Username? (must be between 1 and 16 characters)"
         while True:
@@ -47,7 +47,7 @@ def init(invocation):
                 break
             else:
                 username_prompt = "Invalid username, please try another (must be between 1 and 16 characters):"
-        config_options["user"]["name"] = username
+        repo_config["user"]["name"] = username
 
         email_prompt = "Email address?"
         while True:
@@ -56,10 +56,10 @@ def init(invocation):
                 break
             else:
                 email_prompt = "Invalid email address, please try another:"
-        config_options["user"]["email"] = email_address
+        repo_config["user"]["email"] = email_address
     
     invocation.repo.create_repo()
-    invocation.repo.set_config(config_options)
+    invocation.repo.config.repo_config.set_config(repo_config) # how many dots do I need?!
     print(f"Initialised Gud repository in {invocation.repo.path}")
 
 

@@ -5,6 +5,14 @@ from os.path import realpath
 from configparser import ConfigParser
 
 
+class Config:
+    def __init__(self, repo_path):
+        self.repo_config = RepoConfig(repo_path=repo_path)
+        self.global_config = GlobalConfig()
+
+    
+
+
 class RepoConfig:
     """
     Configuration options for a specific repository.
@@ -21,7 +29,7 @@ class RepoConfig:
             config.read(f)
         return config
 
-    def set_config(self, new_config_options: str|ConfigParser) -> None:
+    def set_config(self, new_config_options: str|dict|ConfigParser) -> None:
         """
         Update the repo's config file with new_config_options, which is either
         a str (if reading from another config file) or a ConfigParser object.
@@ -30,7 +38,7 @@ class RepoConfig:
             if isinstance(new_config_options, ConfigParser):
                 new_config_options.write(f)
             elif isinstance(new_config_options, str):
-                f.write(new_config_options)
+                f.write(new_config_options)               
 
 
 class GlobalConfig:
@@ -63,10 +71,10 @@ class GlobalConfig:
             raise Exception("Default config file not found - possibly corrupted installation.")
         with open(default_config_file, "r", encoding="utf-8") as f:
             default_config = f.read()
-        __class__.set_global_config(default_config)
+        __class__.set_config(default_config)
 
     @classmethod
-    def get_global_config(cls) -> ConfigParser:
+    def get_config(cls) -> ConfigParser:
         """
         Retrieve global configuration settings, as a ConfigParser object.
         """
@@ -76,7 +84,7 @@ class GlobalConfig:
         return config
 
     @classmethod
-    def set_global_config(cls, new_config_options: str|ConfigParser) -> None:
+    def set_config(cls, new_config_options: str|ConfigParser) -> None:
         """
         Update the global config file with new_config_options, which is either
         a str (if reading from another config file) or a ConfigParser object.
