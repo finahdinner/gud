@@ -1,12 +1,11 @@
 from argparse import Namespace
-import configparser
 import os
 import sys
 from os.path import realpath
 from datetime import datetime
 from .config import (
-    GlobalConfig,
-    get_default_config_file_path
+    RepoConfig,
+    GlobalConfig
 )
 
 
@@ -42,53 +41,28 @@ class Repository:
             self.path = f"{cwd}/.gud"
         else:
             self.path = __class__.find_repo_path(cwd)
-        self.config_path = os.path.join(self.path, "config")
-        self.config = self.get_config()
+        self.repo_config = RepoConfig(repo_path=self.path)
         self.global_config = GlobalConfig()
 
-    def set_default_config_options(self):
-        default_config_path = get_default_config_file_path()
-        if not default_config_path:
-            raise Exception("Could not find default config file in installation package.")
-        default_config_options = dict(self.get_config())
-        self.set_config(default_config_options)
-    
-    def create_repo(self):
+    def create_repo(self) -> None:
+        """
+        Create the repo. This is called manually at the conclusion of the <init> command.
+        """
         try:
             os.makedirs(self.path, exist_ok=False)
         except FileExistsError:
-            sys.exit(f"Repository {self.path} already exists.") 
-    
-    def set_config(self, config_options: dict):
+            sys.exit(f"Repository {self.path} already exists.")
+
+    def copy_global_to_repo_config(self, provided_options: dict|None = None) -> None:
         """
-        example structure of config_options
-        config_options = {
-            <section1>: {
-                <option>: <value>
-            },
-            <section2>: {
-                <option>: <value>
-            },
-        }
+        Set the repo's config to same as the global config.
+        Probably needs to bit of additional functionality eventually.
         """
-        config = configparser.ConfigParser()
-        for section in config_options:
-            config[section] = config_options[section]
-        with open(self.config_path, "w") as f:
-            config.write(f)
-        
-    def get_config(self, specified_path=None):
-        config = configparser.ConfigParser()
-        config_file_path = specified_path if specified_path else self.config_path
-        try:
-            with open(config_file_path, "r") as f:
-                config.read(f)
-        except FileNotFoundError:
-            pass # will then return an empty config object
-        return config
+        global_config = self.global_config.get_global_config()
+        self.repo_config.set_config(global_config)
 
     @staticmethod
-    def find_repo_path(curr_path):
+    def find_repo_path(curr_path) -> str:
         """ Recurse up the path tree to find the deepest .gud/ directory, if there is one """
         while True:
             parent_dir_path = realpath(os.path.dirname(curr_path))
