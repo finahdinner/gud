@@ -17,7 +17,7 @@ class CommandInvocation:
         self.cwd = cwd # current working directory
         self.timestamp = __class__.get_timestamp_aware()
         if self.command == "init":
-            self.repo = Repository(cwd, repo_exists=False)
+            self.repo = Repository(cwd, create_new_repo=True)
         else:
             self.repo = Repository(cwd)
 
@@ -36,18 +36,23 @@ class CommandInvocation:
     
 
 class Repository:
-    def __init__(self, cwd: str, repo_exists = True):
-        if not repo_exists:
-            # this dir doesn't exist but will be made if the 'init' command is completed
-            self.path = f"{cwd}/.gud"
+    def __init__(self, cwd: str, create_new_repo = False):
+        if create_new_repo:
+            existing_repo_path = __class__.find_repo_path(cwd)
+            if existing_repo_path:
+                sys.exit(f"Repository already exists at {existing_repo_path}.")
+            else:
+                self.path = f"{cwd}/.gud"
         else:
             self.path = __class__.find_repo_path(cwd)
+            if not self.path:
+                sys.exit("No gud repository found in this directory, or in any parent directory.")
 
         self.global_config = GlobalConfig()
         self.repo_config = RepoConfig(repo_path=self.path)
 
         # the "effective" config - combination of global and repo-specific settings
-        if repo_exists:
+        if not create_new_repo:
             self.config = self.resolve_working_config()
 
     def create_repo(self) -> None:
@@ -90,7 +95,7 @@ class Repository:
         while True:
             parent_dir_path = realpath(os.path.dirname(curr_path))
             if curr_path == parent_dir_path:
-                sys.exit("No gud repository found in this directory, or in any parent directory.")
+                return ""
             if ".gud" in os.listdir(curr_path):
                 break
             curr_path = parent_dir_path
