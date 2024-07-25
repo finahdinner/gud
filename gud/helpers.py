@@ -1,6 +1,4 @@
 import re
-import os
-from os.path import realpath
 
 
 def is_valid_username(username) -> bool:
