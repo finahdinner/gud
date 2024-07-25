@@ -18,7 +18,7 @@ class RepoConfig:
         """
         config = ConfigParser()
         with open(self.path, "r", encoding="utf-8") as f:
-            config.read(f)
+            config.read_file(f)
         return config
 
     def set_config(self, new_config_options: str|dict|ConfigParser) -> None:
@@ -72,7 +72,7 @@ class GlobalConfig:
         """
         config = ConfigParser()
         with open(cls.path, "r", encoding="utf-8") as f:
-            config.read(f)
+            config.read_file(f)
         return config
 
     @classmethod
