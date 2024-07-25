@@ -23,6 +23,7 @@ def init(invocation):
     
     if invocation.args["global_config"]:
 
+        invocation.repo.create_repo()
         repo_config = invocation.repo.copy_global_to_repo_config()
         print("--global-config flag provided: using global config options...")
 
@@ -56,9 +57,9 @@ def init(invocation):
             else:
                 email_prompt = "Invalid email address, please try another:"
         repo_config["user"]["email"] = email_address
-    
-    invocation.repo.create_repo()
-    invocation.repo.repo_config.set_config(repo_config)
+        invocation.repo.create_repo()
+        invocation.repo.repo_config.set_config(repo_config)
+
     print(f"Initialised Gud repository in {invocation.repo.path}")
 
 
