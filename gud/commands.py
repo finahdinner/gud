@@ -101,3 +101,42 @@ def config(invocation):
         print(f"{repo_or_global.capitalize()} config options ({config_path}):\n")
         with open(config_path, "r", encoding="utf-8") as f:
             print(f.read())
+
+
+def stage(invocation):
+
+    action = invocation.args.get("add_or_remove", None)
+    if not action:
+        action = questionary.select(
+            "Would you like to add files to, or remove files from, the staging area?",
+            ["Add", "Remove"]
+        ).ask().lower()
+
+    if action == "add":
+        files_to_add = []
+        files_not_staged = [] # TODO - generate a list of files that are NOT in the staging area
+        while True:
+            file = questionary.select(
+                "Select a file to add to the staging area",
+                files_not_staged
+            ).ask().lower()
+            # TODO - add a way to allow the user to break the loop
+            if not file.strip():
+                break
+            files_to_add.append(file)
+        # TODO - with these files_to_add, add them all to the staging area here
+
+    elif action == "remove":
+
+        files_to_remove = []
+        files_that_are_staged = [] # TODO - generate a list of files that are NOT in the staging area
+        while True:
+            file = questionary.select(
+                "Select a file to add to the staging area",
+                files_that_are_staged
+            ).ask().lower()
+            # TODO - add a way to allow the user to break the loop
+            if not file.strip():
+                break
+            files_to_remove.append(file)
+        # TODO - with these files_to_remove, remove them all to the staging area here
