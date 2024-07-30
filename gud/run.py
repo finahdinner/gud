@@ -30,6 +30,16 @@ view_or_edit.add_argument("--edit", "-e", action="store_true", help="Edit config
 repo_or_default = config_subparser.add_mutually_exclusive_group(required=False)
 repo_or_default.add_argument("--default", "-d", action="store_true", help="Access the default configuration options")
 
+status_subparser = subparsers.add_parser('config', help="View all staged and unstaged files")
+
+stage_subparser = subparsers.add_parser('stage', help="Add or remove file(s) to or from the staging area")
+add_or_remove = stage_subparser.add_mutually_exclusive_group(required=False)
+add_or_remove.add_argument("--add", "-a", action="store_true", help="Add file(s) the staging area")
+add_or_remove.add_argument("--remove", "-r", action="store_true", help="Remove file(s) from the staging area")
+
+commit_subparser = subparsers.add_parser('config', help="Commit staged files to the repository's history")
+
+
 
 def main():
     
