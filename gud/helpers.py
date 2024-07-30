@@ -18,15 +18,33 @@ def is_valid_email(email) -> bool:
     return results is not None
 
 
-def get_file_bytes(filepath, decompress=False):
+def get_uncompressed_file_bytes(filepath, already_compressed=False) -> bytes:
     with open(filepath, "rb") as f:
-        if decompress:
+        if already_compressed: # if reading from .gud/objects
             contents = zlib.decompress(f.read())
         else:
             contents = f.read()
         return contents
+    
+
+def get_compressed_file_bytes(filepath, already_compressed=False) -> bytes:
+    with open(filepath, "rb") as f:
+        if already_compressed: # if reading from .gud/objects
+            contents = f.read()
+        else:
+            contents = zlib.compress(f.read())
+        return contents
 
 
-def get_file_hash(filepath, decompress):
+def hash_file_from_working_dir(filepath) -> str:
+    file_uncompressed = get_uncompressed_file_bytes(filepath, already_compressed=False)
+    file_hash = sha1(file_uncompressed).hexdigest()
+    # TODO - make file in .gud/objects, relating to the file hash
+    # then stored the COMPRESSED file at that path
+
+
+
+
+def get_file_hash(filepath, decompress) -> str:
     file_contents = get_file_bytes(filepath, decompress)
     return sha1(file_contents).hexdigest()

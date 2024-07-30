@@ -43,10 +43,12 @@ class Repository:
                 sys.exit(f"Repository already exists at {existing_repo_path}.")
             else:
                 self.path = f"{cwd}/.gud"
+                self.index = None # will be created later
         else:
             self.path = __class__.find_repo_path(cwd)
             if not self.path:
                 sys.exit("No gud repository found in this directory, or in any parent directory.")
+            self.index = Index(repo_path=self.path)
 
         self.global_config = GlobalConfig()
         self.repo_config = RepoConfig(repo_path=self.path)
@@ -63,6 +65,11 @@ class Repository:
             os.makedirs(self.path, exist_ok=False)
         except FileExistsError:
             sys.exit(f"Repository {self.path} already exists.")
+
+        # create the index file
+        self.index = Index(self.path)
+  
+        
 
     def resolve_working_config(self) -> ConfigParser:
         """
@@ -100,3 +107,44 @@ class Repository:
                 break
             curr_path = parent_dir_path
         return f"{curr_path}/.gud"
+    
+
+class Index:
+    """
+    The index file tracks 
+    """
+    def __init__(self, repo_path, index_already_exists=True):
+        self.path = os.path.join(repo_path, "index")
+        if not index_already_exists:
+            # create blank index file
+            with open(self.path, "w"):
+                pass
+
+        def add_to_index(self, object):
+            """
+            Add a single file to the index
+            """
+            ...
+
+        def remove_from_index(self):
+            """
+            Remove a single file from the index
+            """
+            ...
+
+
+class Object:
+    def __init__(self):
+        ...
+
+    # TODO - implement this
+    """
+    object types:
+        - blob (eg a file)
+        - tree (a snapshot of the index at a given time):
+            - this contains a list of the file hashes and file paths of objects at a given time
+        - commit:
+            - tree
+            - parent commit
+            - author/timestamp etc    
+    """
