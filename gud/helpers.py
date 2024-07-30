@@ -1,6 +1,17 @@
 import re
 from hashlib import sha1
 import zlib
+from enum import Enum
+
+
+class ObjectType(Enum):
+    BLOB = "blob"
+    TREE = "tree"
+    COMMIT = "commit"
+
+    @classmethod
+    def get_all_values(cls):
+        return [x.value for x in cls]
 
 
 def is_valid_username(username) -> bool:

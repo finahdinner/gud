@@ -8,6 +8,7 @@ from .config import (
     GlobalConfig,
     RepoConfig,
 )
+from .helpers import ObjectType
 
 
 class CommandInvocation:
@@ -111,7 +112,8 @@ class Repository:
 
 class Index:
     """
-    The index file tracks 
+    The index file is a virtual representation of what the repository views the current state
+    of the repository to be. A tree object is a snapshot of the index at a given time.
     """
     def __init__(self, repo_path, index_already_exists=True):
         self.path = os.path.join(repo_path, "index")
@@ -134,9 +136,6 @@ class Index:
 
 
 class Object:
-    def __init__(self):
-        ...
-
     # TODO - implement this
     """
     object types:
@@ -148,3 +147,4 @@ class Object:
             - parent commit
             - author/timestamp etc    
     """
+    ...
