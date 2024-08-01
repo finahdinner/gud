@@ -14,7 +14,23 @@ in the wrong directory when trying to use gud commands.
 gud init
 - use "questionary" (https://pypi.org/project/questionary/) for the interactive selection screen(s)
 
+gud status
+- hash all files in the working dir (except "ignored" ones) and compare to the current index (.gud/index)
+(which represents the latest "tree"), and match each file to a file in the index
+    - if a file is in the working dir but not the index, label as "untracked"
+    - if a file is in the working dir AND index, but they do not match hashes/permissons, label as "changed"
+    - if a file is in the working dir AND index, and is indentical, do not list/label it
+    - additionally, 
 
+gud add <file>
+- tldr: update the current index (.gud/index)
+    - if the file is already in the index, update its hash + permissions
+    - if the file is not in the index, add it as a row
+
+gud commit
+- tldr: save the current index as a "tree" object, then create a commit object, containing the tree's hash,
+the hash of the current HEAD (listed under "parent" commit), and the authorship details, then hash this commit file
+and name it by its hash. then update the HEAD to the hash of this commit
 
 Useful notes:
 - `with open()...` will open a file relative to the working directory where the initial script was invoked
