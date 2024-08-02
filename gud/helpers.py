@@ -2,16 +2,23 @@ import re
 from hashlib import sha1
 import zlib
 from enum import Enum
+import os
+import subprocess
 
 
-class ObjectType(Enum):
-    BLOB = "blob"
-    TREE = "tree"
-    COMMIT = "commit"
-
+class EnumWrapper(Enum):
+    @classmethod
+    def get_all_names(cls):
+        return [x.name for x in cls]
+    
     @classmethod
     def get_all_values(cls):
         return [x.value for x in cls]
+
+class OperatingSystem(EnumWrapper):
+    WINDOWS = "Windows"
+    MAC_OS = "Darwin"
+    LINUX = "Linux"
 
 
 def is_valid_username(username) -> bool:
@@ -54,8 +61,17 @@ def hash_file_from_working_dir(filepath) -> str:
     # then stored the COMPRESSED file at that path
 
 
-
-
 def get_file_hash(filepath, decompress) -> str:
     file_contents = get_file_bytes(filepath, decompress)
     return sha1(file_contents).hexdigest()
+
+
+def open_relevant_editor(op_sys: OperatingSystem, file_path: str) -> None:
+    # TODO - figure out how to ensure file permissions are okay for opening the file
+    match op_sys.name:
+        case "WINDOWS":
+            os.system(f"notepad {file_path}")
+        case "MAC_OS":
+            subprocess.call(["open", "-e", file_path])
+        case "LINUX":
+            subprocess.call(["nano", file_path])
