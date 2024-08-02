@@ -4,11 +4,12 @@ import sys
 from os.path import realpath
 from datetime import datetime
 from configparser import ConfigParser
+from .helpers import OperatingSystem
 from .config import (
     GlobalConfig,
     RepoConfig,
 )
-from .helpers import ObjectType
+import platform
 
 
 class CommandInvocation:
@@ -17,6 +18,12 @@ class CommandInvocation:
         self.args: dict = __class__.get_additional_commands(all_args)
         self.cwd = cwd # current working directory
         self.timestamp = __class__.get_timestamp_aware()
+        # get the OS of the host system
+        try:
+            pltform = platform.system()
+            self.os = OperatingSystem(pltform)
+        except ValueError:
+            sys.exit(f"Your platform ({pltform}) is not supported.\nSupported platforms: {OperatingSystem.get_all_names()}")
         if self.command == "init":
             self.repo = Repository(cwd, create_new_repo=True)
         else:
