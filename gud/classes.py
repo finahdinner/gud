@@ -134,11 +134,53 @@ class GudObject:
             - author/timestamp etc    
     """
     def __init__(self, data):
+        self.data = ...
+
+    def serialise(self):
+        ...
+
+    def deserialise(self):
         ...
 
 
-class Blob(GudObject):
-    ...
+class Blob:
+    type = "blob"
+
+    def __init__(self, data):
+        self.data = self.serialise(data)
+    
+    def serialise(self, usable_data):
+        """
+        Usable/readable data -> serialised data for storage
+
+        - read file contents
+        - create the header
+        - compress the file contents
+        - combine the header + compressed file contents
+        - hash this overall contents
+        - store the blob, with the name/location based on the hash
+
+        """
+        
+
+    def deserialise(self, serialised_data):
+        """
+        Serialised/stored data -> usable/readable data
+        """
+        ...
+
+
+class Commit:
+    type = "commit"
+    
+    def __init__(self, data):
+        self.data = self.serialise(data)
+    
+    def serialise(self, data):
+        ...
+
+    def deserialise(self):
+        ...
 
 
 class Tree:
@@ -169,12 +211,6 @@ class Tree:
 
         """
         # TODO - implement
-        
-        
-
-
-class Commit(GudObject):
-    ...
 
 
 class Index:
