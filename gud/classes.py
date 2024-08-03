@@ -120,6 +120,63 @@ class Repository:
             curr_path = parent_dir_path
         return curr_path   
 
+
+class GudObject:
+    # TODO - implement this
+    """
+    object types:
+        - blob (eg a file)
+        - tree (a snapshot of the index at a given time):
+            - this contains a list of the file hashes and file paths of objects at a given time
+        - commit:
+            - tree
+            - parent commit
+            - author/timestamp etc    
+    """
+    def __init__(self, data):
+        ...
+
+
+class Blob(GudObject):
+    ...
+
+
+class Tree:
+    """
+    Imagine it as being a node in a larger tree
+    This node contains 0 or more blobs
+    and 0 or more trees (subdirectories)
+
+    File contents:
+        each row:
+            mode, object_type, hash, name
+        eg a blob:
+            00644 blob a906cb2a4a904a152e80877d4088654daad0c859 README
+        eg another tree:
+            040000 tree 99f1a6d12cb4b6f19c8655fca46c3ecf317074e0 lib
+
+    As trees point to subdirectory trees, when creating a tree object,
+    you should start from the DEEPEST node and work your way up
+    """
+
+
+    def __init__(self, root_dir):
+        """
+        starting at the root_dir, traverse all files in the working directory
+
+
+
+
+        """
+        # TODO - implement
+        
+        
+
+
+class Commit(GudObject):
+    ...
+
+
 class Index:
     """
     The index file is a virtual representation of what the repository views the current state
@@ -143,18 +200,3 @@ class Index:
             Remove a single file from the index
             """
             ...
-
-
-class Object:
-    # TODO - implement this
-    """
-    object types:
-        - blob (eg a file)
-        - tree (a snapshot of the index at a given time):
-            - this contains a list of the file hashes and file paths of objects at a given time
-        - commit:
-            - tree
-            - parent commit
-            - author/timestamp etc    
-    """
-    ...

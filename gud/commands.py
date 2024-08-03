@@ -9,6 +9,11 @@ from .helpers import (
     is_valid_email,
     open_relevant_editor
 )
+from .classes import (
+    Blob,
+    Tree,
+    Commit
+)
 
 
 def hello(invocation):
@@ -107,9 +112,7 @@ def status(invocation):
     - additionally, 
     """
     # parse the index to get the latest virtual "tree"
-    curr_tree = Tree(invocation.path)
-
-
+    ...
 
 
 def stage(invocation):
