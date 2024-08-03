@@ -9,7 +9,10 @@ from .config import (
     GlobalConfig,
     RepoConfig,
 )
+from .globals import COMPRESSION_LEVEL
 import platform
+import zlib
+from hashlib import sha1
 
 
 class CommandInvocation:
@@ -144,24 +147,40 @@ class GudObject:
 
 
 class Blob:
-    type = "blob"
-
-    def __init__(self, data):
-        self.data = self.serialise(data)
+    def __init__(self, file_path: str, repo: Repository):
+        self.path = file_path
+        self.objects_dir = os.path.join(repo.path, "objects")
     
-    def serialise(self, usable_data):
+    def serialise(self, write_to_file=False):
         """
         Usable/readable data -> serialised data for storage
-
         - read file contents
         - create the header
         - compress the file contents
         - combine the header + compressed file contents
         - hash this overall contents
         - store the blob, with the name/location based on the hash
-
         """
-        
+        # open and read bytes
+        with open(self.path, "rb") as f:
+            uncompressed_content = f.read()
+        # create the header
+        uncompressed_size = len(uncompressed_content)
+        header = f"blob {uncompressed_size}\0".encode() # as bytes
+        # compress the file
+        compressed_content = zlib.compress(uncompressed_content, level=COMPRESSION_LEVEL)
+        # full blob content
+        full_content = header + compressed_content
+        # hash
+        hash = sha1(full_content).hexdigest()
+        # only if write_to_file is specified
+        if write_to_file:
+            dir_name = hash[:2]
+            file_name = hash[2:]
+            full_file_path = os.path.join(self.objects_dir, dir_name, file_name)
+            with open(full_file_path, "wb") as f:
+                f.write(full_content)
+        return hash        
 
     def deserialise(self, serialised_data):
         """

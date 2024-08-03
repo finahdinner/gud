@@ -62,3 +62,20 @@ docker build -t gud-dev .
 
 # running the container with an interactive shell
 docker run -it gud-dev sh
+
+
+# Compression levels:
+Diminishing returns:
+
+Example with a .py file:
+    size_before=2268
+    Compressed size at level 0: 2279
+    Compressed size at level 1: 841
+    Compressed size at level 2: 824
+    Compressed size at level 3: 824
+    Compressed size at level 4: 798
+    Compressed size at level 5: 791
+    Compressed size at level 6: 791
+    Compressed size at level 7: 791
+    Compressed size at level 8: 791
+    Compressed size at level 9: 791
