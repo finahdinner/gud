@@ -97,6 +97,21 @@ def config(invocation):
             print(f.read())
 
 
+def status(invocation):
+    """
+    - hash all files in the working dir (except "ignored" ones) and compare to the current index (.gud/index)
+    (which represents the latest "tree"), and match each file to a file in the index
+    - if a file is in the working dir but not the index, label as "untracked"
+    - if a file is in the working dir AND index, but they do not match hashes/permissons, label as "changed"
+    - if a file is in the working dir AND index, and is indentical, do not list/label it
+    - additionally, 
+    """
+    # parse the index to get the latest virtual "tree"
+    curr_tree = Tree(invocation.path)
+
+
+
+
 def stage(invocation):
 
     action = invocation.args.get("add_or_remove", None)

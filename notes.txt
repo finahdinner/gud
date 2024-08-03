@@ -20,7 +20,6 @@ gud status
     - if a file is in the working dir but not the index, label as "untracked"
     - if a file is in the working dir AND index, but they do not match hashes/permissons, label as "changed"
     - if a file is in the working dir AND index, and is indentical, do not list/label it
-    - additionally, 
 
 gud add <file>
 - tldr: update the current index (.gud/index)

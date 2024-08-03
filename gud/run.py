@@ -6,6 +6,7 @@ from .commands import (
     init,
     hello,
     config,
+    status
 )
 
 
@@ -30,7 +31,7 @@ repo_or_default = config_subparser.add_mutually_exclusive_group(required=False)
 repo_or_default.add_argument("--global", "-g", action="store_true", help="Access the global configuration options")
 
 # TODO - implement these
-# status_subparser = subparsers.add_parser('config', help="View all staged and unstaged files")
+status_subparser = subparsers.add_parser('status', help="View all staged and unstaged files")
 
 # stage_subparser = subparsers.add_parser('stage', help="Add or remove file(s) to or from the staging area")
 # add_or_remove = stage_subparser.add_mutually_exclusive_group(required=False)
@@ -53,6 +54,8 @@ def main():
             init(invocation)
         case "config":
             config(invocation)
+        case "status":
+            status(invocation)
 
 
 if __name__ == "__main__":

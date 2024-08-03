@@ -46,14 +46,17 @@ class CommandInvocation:
 class Repository:
     def __init__(self, cwd: str, create_new_repo = False):
         if create_new_repo:
-            existing_repo_path = __class__.find_repo_path(cwd)
-            if existing_repo_path:
-                sys.exit(f"Repository already exists at {existing_repo_path}.")
+            existing_repo_root_dir = __class__.find_repo_root_dir(cwd)
+            if existing_repo_root_dir:
+                existing_repo_path = os.path.join(existing_repo_root_dir, ".gud/")
+                sys.exit(f"Repository already exists at {existing_repo_path}")
             else:
-                self.path = f"{cwd}/.gud"
+                self.root = cwd
+                self.path = os.path.join(self.root, ".gud/")
                 self.index = None # will be created later
         else:
-            self.path = __class__.find_repo_path(cwd)
+            self.root = __class__.find_repo_root_dir(cwd)
+            self.path = os.path.join(self.root, ".gud/")
             if not self.path:
                 sys.exit("No gud repository found in this directory, or in any parent directory.")
             self.index = Index(repo_path=self.path)
@@ -103,8 +106,11 @@ class Repository:
         self.repo_config.set_config(global_config)
 
     @staticmethod
-    def find_repo_path(curr_path) -> str:
-        """ Recurse up the path tree to find the deepest .gud/ directory, if there is one """
+    def find_repo_root_dir(curr_path) -> str:
+        """
+        Recurse up the path tree to find the parent dir of
+        the deepest .gud/ directory, if there is one
+        """
         while True:
             parent_dir_path = realpath(os.path.dirname(curr_path))
             if curr_path == parent_dir_path:
@@ -112,8 +118,7 @@ class Repository:
             if ".gud" in os.listdir(curr_path):
                 break
             curr_path = parent_dir_path
-        return f"{curr_path}/.gud"
-    
+        return curr_path   
 
 class Index:
     """
