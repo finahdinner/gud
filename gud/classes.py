@@ -147,11 +147,10 @@ class GudObject:
 
 
 class Blob:
-    def __init__(self, file_path: str, repo: Repository):
-        self.path = file_path
+    def __init__(self, repo: Repository):
         self.objects_dir = os.path.join(repo.path, "objects")
     
-    def serialise(self, write_to_file=False):
+    def serialise(self, og_file_path: str, write_to_file=False) -> str:
         """
         Usable/readable data -> serialised data for storage
         - read file contents
@@ -162,7 +161,7 @@ class Blob:
         - store the blob, with the name/location based on the hash
         """
         # open and read bytes
-        with open(self.path, "rb") as f:
+        with open(og_file_path, "rb") as f:
             uncompressed_content = f.read()
         # create the header
         uncompressed_size = len(uncompressed_content)
@@ -172,21 +171,36 @@ class Blob:
         # full blob content
         full_content = header + compressed_content
         # hash
-        hash = sha1(full_content).hexdigest()
+        blob_hash = sha1(full_content).hexdigest()
         # only if write_to_file is specified
         if write_to_file:
-            dir_name = hash[:2]
-            file_name = hash[2:]
-            full_file_path = os.path.join(self.objects_dir, dir_name, file_name)
+            full_file_path = self.get_full_file_path_from_hash(blob_hash)
             with open(full_file_path, "wb") as f:
                 f.write(full_content)
-        return hash        
+        return blob_hash        
 
-    def deserialise(self, serialised_data):
+    def deserialise(self, blob_hash):
         """
         Serialised/stored data -> usable/readable data
         """
-        ...
+        full_file_path = self.get_full_file_path_from_hash(blob_hash)
+        with open(full_file_path, "rb") as f:
+            full_content = f.read()
+        try:
+            header, compressed_content = full_content.split(b"\0")
+        except ValueError:
+            raise ValueError("Null delimiter not found - incorrect blob format being read.")
+        type, uncompressed_size_str = header.decode().split(" ")
+        assert type == "blob"
+        uncompressed_content = zlib.decompress(compressed_content)
+        assert int(uncompressed_size_str) == len(uncompressed_content)
+        # TODO - decide what to return from this function
+        return uncompressed_content
+
+    def get_full_file_path_from_hash(self, hash: str) -> str:
+        dir_name = hash[:2]
+        file_name = hash[2:]
+        return os.path.join(self.objects_dir, dir_name, file_name)
 
 
 class Commit:
