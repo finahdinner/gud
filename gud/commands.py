@@ -16,6 +16,10 @@ from .classes import (
 )
 
 
+def test(invocation):
+    print("This is a test command!")
+
+
 def hello(invocation):
     name = invocation.args.get("name")
     if name:
