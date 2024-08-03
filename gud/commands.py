@@ -49,18 +49,24 @@ def init(invocation):
         repo_config.add_section("user")
         repo_config.add_section("repo")
 
-        username_prompt = "Username? (must be between 1 and 16 characters)"
+        username_prompt = f"Username? (leave blank to use default global username):"
         while True:
             username = questionary.text(username_prompt).ask()
+            if not username: # default to global username
+                username = invocation.repo.global_config.get_config()["user"]["name"]
+                break
             if is_valid_username(username):
                 break
             else:
                 username_prompt = "Invalid username, please try another (must be between 1 and 16 characters):"
         repo_config["user"]["name"] = username
 
-        email_prompt = "Email address?"
+        email_prompt = "Email address? (leave blank to use default global email address):"
         while True:
             email_address = questionary.text(email_prompt).ask()
+            if not email_address: # default to global email address
+                email_address = invocation.repo.global_config.get_config()["user"]["email"]
+                break
             if is_valid_email(email_address):
                 break
             else:
