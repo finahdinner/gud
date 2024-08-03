@@ -77,9 +77,9 @@ class Repository:
             os.makedirs(self.path, exist_ok=False)
         except FileExistsError:
             sys.exit(f"Repository {self.path} already exists.")
-
-        # create the index file
-        self.index = Index(self.path)
+        # create objects dir
+        objects_dir_path = os.path.join(self.path, "objects/")
+        os.mkdir(objects_dir_path)
   
     def resolve_working_config(self) -> ConfigParser:
         """
