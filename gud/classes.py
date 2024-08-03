@@ -9,7 +9,7 @@ from .config import (
     GlobalConfig,
     RepoConfig,
 )
-from .globals import COMPRESSION_LEVEL, DELIMITER_STR
+from .globals import COMPRESSION_LEVEL
 import platform
 import zlib
 from hashlib import sha1
@@ -163,7 +163,7 @@ class Blob:
             uncompressed_content = f.read()
         # create the header
         uncompressed_size = len(uncompressed_content)
-        header = f"blob {uncompressed_size}{DELIMITER_STR}".encode() # as bytes
+        header = f"blob {uncompressed_size}\0".encode() # as bytes
         # compress the file
         compressed_content = zlib.compress(uncompressed_content, level=COMPRESSION_LEVEL)
         # full blob content
@@ -189,9 +189,8 @@ class Blob:
         full_file_path = self.get_full_file_path_from_hash(blob_hash)
         with open(full_file_path, "rb") as f:
             full_content = f.read()
-        print(full_content)
         try:
-            header, compressed_content = full_content.split(DELIMITER_STR.encode())
+            header, compressed_content = full_content.split(b"\0", 1) # only split on the first occurence
         except ValueError:
             raise ValueError("Null delimiter not found - incorrect blob format being read.")
         type, uncompressed_size_str = header.decode().split(" ")
