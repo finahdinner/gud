@@ -91,11 +91,12 @@ def config(invocation):
 
     # execute the command based on the modes determined above
     if repo_or_global == "global":
-        config_path = invocation.repo.global_repo.path
+        config_path = invocation.repo.global_config.path
     else: # else "repository"
         config_path = invocation.repo.repo_config.path
 
     if view_or_edit == "edit":
+        print(f"Opening {config_path}...\nClose editor to continue...")
         open_relevant_editor(invocation.os, config_path)
     else:
         print(f"{repo_or_global.capitalize()} config options ({config_path}):\n")

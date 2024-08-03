@@ -67,12 +67,10 @@ def get_file_hash(filepath, decompress) -> str:
 
 
 def open_relevant_editor(op_sys: OperatingSystem, file_path: str) -> None:
-    # TODO - figure out how to ensure file permissions are okay for opening the file
     match op_sys.name:
         case "WINDOWS":
-            exit_code = os.system(f"notepad {file_path}")
+            os.system(f"notepad {file_path}")
         case "MAC_OS":
-            exit_code = subprocess.call(["open", "-e", file_path])
+            subprocess.call(["open", "-e", file_path])
         case "LINUX":
-            exit_code = subprocess.call(["nano", file_path])
-    print(f"{exit_code=}")
+            subprocess.call(["nano", file_path])
