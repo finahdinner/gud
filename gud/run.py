@@ -7,6 +7,7 @@ from .commands import (
     hello,
     init,
     config,
+    ignoring,
     status
 )
 
@@ -30,6 +31,8 @@ view_or_edit.add_argument("--view", "-v", action="store_true", help="View config
 view_or_edit.add_argument("--edit", "-e", action="store_true", help="Edit configuration options")
 repo_or_default = config_subparser.add_mutually_exclusive_group(required=False)
 repo_or_default.add_argument("--global", "-g", action="store_true", help="Access the global configuration options")
+
+ignoring_subparser = subparsers.add_parser('ignoring', help="View which files Gud is currently set to ignore")
 
 # TODO - implement these
 status_subparser = subparsers.add_parser('status', help="View all staged and unstaged files")
@@ -60,6 +63,8 @@ def main():
             init(invocation)
         case "config":
             config(invocation)
+        case "ignoring":
+            ignoring(invocation)
         case "status":
             status(invocation)
 

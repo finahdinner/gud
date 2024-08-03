@@ -1,0 +1,7 @@
+
+
+# If you wish to tell Gud not to track any specific files or directories, specify these files
+# or directories in this file, with one pattern per line.
+# example: if you don't want Gud to track your virtual environment, you might write venv/ on a line
+# example: if you don't want Gud to track any files beginning "f", you might write f* on a line
+# see https://git-scm.com/docs/gitignore/en for supported patterns

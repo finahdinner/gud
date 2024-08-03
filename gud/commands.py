@@ -3,17 +3,20 @@ All of these are commands that will ultimately be used as `gud <command_name>`
 """
 import sys
 import questionary
+import shutil
 from configparser import ConfigParser
 from .helpers import (
     is_valid_username,
     is_valid_email,
-    open_relevant_editor
+    open_relevant_editor,
+    get_default_file_from_package_installation
 )
 from .classes import (
     Blob,
     Tree,
     Commit
 )
+import os
 
 
 def test(invocation):
@@ -72,6 +75,18 @@ def init(invocation):
             else:
                 email_prompt = "Invalid email address, please try another:"
         repo_config["user"]["email"] = email_address
+
+        gudignore_prompt = "Do you want Gud to not track any files? (You can change this later)"
+        answer = questionary.select(gudignore_prompt, ["No", "Yes"]).ask()
+        if answer.lower() == "yes":
+            default_gudignore_file = get_default_file_from_package_installation("gudignore")
+            if not default_gudignore_file:
+                raise Exception("Default gudignore file not found - possibly corrupted installation.")
+            repo_gudignore_path = os.path.join(invocation.repo.root, ".gudignore")
+            shutil.copyfile(default_gudignore_file, repo_gudignore_path)
+            print(f"Opening {repo_gudignore_path}...\nClose editor to continue...")
+            open_relevant_editor(invocation.os, repo_gudignore_path)
+
         invocation.repo.create_repo()
         invocation.repo.repo_config.set_config(repo_config)
 
@@ -117,6 +132,16 @@ def config(invocation):
         print(f"{repo_or_global.capitalize()} config options ({config_path}):\n")
         with open(config_path, "r", encoding="utf-8") as f:
             print(f.read())
+
+
+def ignoring(invocation):
+    """
+    Show all files in this repository that Gud is set to ignore
+    Find all .gudignore files, and print them out in stdout
+    Make sure to label each file above its contents, and make it clear/well-formatted
+    """
+    # TODO - implement
+    ...
 
 
 def status(invocation):

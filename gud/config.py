@@ -1,8 +1,7 @@
 import appdirs
-import importlib.util
 import os
-from os.path import realpath
 from configparser import ConfigParser
+from .helpers import get_default_file_from_package_installation
 
 
 class RepoConfig:
@@ -58,7 +57,7 @@ class GlobalConfig:
         os.makedirs(cls.__dir, exist_ok=True)
         if os.path.exists(cls.path):
             return
-        default_config_file = get_default_config_file_path()
+        default_config_file = get_default_file_from_package_installation("config")
         if not default_config_file:
             raise Exception("Default config file not found - possibly corrupted installation.")
         with open(default_config_file, "r", encoding="utf-8") as f:
@@ -86,19 +85,3 @@ class GlobalConfig:
                 new_config_options.write(f)
             elif isinstance(new_config_options, str):
                 f.write(new_config_options)
-
-
-def get_default_config_file_path() -> str|None:
-    """
-    Retrieve the file path of the default config file,
-    which is packaged up in the gud installation.
-    """
-    spec = importlib.util.find_spec("gud")
-    if spec is None:
-        return None
-    loc = spec.origin
-    if loc is None:
-        return None
-    loc_dir = os.path.dirname(loc)
-    config_path = realpath(os.path.join(loc_dir, "defaults", "config"))
-    return config_path

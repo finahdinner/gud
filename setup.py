@@ -12,7 +12,7 @@ setup(
     ],
     include_package_data=True,
     package_data={
-        'gud': ['defaults/config'],
+        'gud': ['defaults/config', 'defaults/gudignore'],
     },
     entry_points={
         "console_scripts": [

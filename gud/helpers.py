@@ -1,9 +1,9 @@
 import re
-from hashlib import sha1
-import zlib
 from enum import Enum
 import os
 import subprocess
+import importlib.util
+from os.path import realpath
 
 
 class EnumWrapper(Enum):
@@ -44,3 +44,19 @@ def open_relevant_editor(op_sys: OperatingSystem, file_path: str) -> None:
             subprocess.call(["open", "-e", file_path])
         case "LINUX":
             subprocess.call(["nano", file_path])
+
+
+def get_default_file_from_package_installation(file_name) -> None|str:
+    """
+    Retrieve the file path of the default config file,
+    which is packaged up in the gud installation.
+    """
+    spec = importlib.util.find_spec("gud")
+    if spec is None:
+        return None
+    loc = spec.origin
+    if loc is None:
+        return None
+    loc_dir = os.path.dirname(loc)
+    default_file_path = realpath(os.path.join(loc_dir, "defaults", file_name))
+    return default_file_path
