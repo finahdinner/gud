@@ -4,10 +4,10 @@ All of these are commands that will ultimately be used as `gud <command_name>`
 import sys
 import questionary
 from configparser import ConfigParser
-
 from .helpers import (
     is_valid_username,
-    is_valid_email
+    is_valid_email,
+    open_relevant_editor
 )
 
 
@@ -96,7 +96,7 @@ def config(invocation):
         config_path = invocation.repo.repo_config.path
 
     if view_or_edit == "edit":
-        print("Editing...") # TODO - implement a way to edit
+        open_relevant_editor(invocation.os, config_path)
     else:
         print(f"{repo_or_global.capitalize()} config options ({config_path}):\n")
         with open(config_path, "r", encoding="utf-8") as f:

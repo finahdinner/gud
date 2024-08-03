@@ -70,8 +70,9 @@ def open_relevant_editor(op_sys: OperatingSystem, file_path: str) -> None:
     # TODO - figure out how to ensure file permissions are okay for opening the file
     match op_sys.name:
         case "WINDOWS":
-            os.system(f"notepad {file_path}")
+            exit_code = os.system(f"notepad {file_path}")
         case "MAC_OS":
-            subprocess.call(["open", "-e", file_path])
+            exit_code = subprocess.call(["open", "-e", file_path])
         case "LINUX":
-            subprocess.call(["nano", file_path])
+            exit_code = subprocess.call(["nano", file_path])
+    print(f"{exit_code=}")
