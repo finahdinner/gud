@@ -77,8 +77,6 @@ class Repository:
         # create the index file
         self.index = Index(self.path)
   
-        
-
     def resolve_working_config(self) -> ConfigParser:
         """
         Combine the global config and repo-specific config settings
