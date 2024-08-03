@@ -33,13 +33,6 @@ def init(invocation):
         repo_config.add_section("user")
         repo_config.add_section("repo")
 
-        experience_level = questionary.select(
-            "What is your level of experience with Git, Gud or other similar"
-            " version control softwares?",
-            ["Beginner", "Intermediate", "Advanced"]
-        ).ask()
-        repo_config["repo"]["experience_level"] = experience_level.lower()
-
         username_prompt = "Username? (must be between 1 and 16 characters)"
         while True:
             username = questionary.text(username_prompt).ask()
