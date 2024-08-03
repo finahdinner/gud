@@ -173,6 +173,11 @@ class Blob:
         # only if write_to_file is specified
         if write_to_file:
             full_file_path = self.get_full_file_path_from_hash(blob_hash)
+            # create the dir if it doesn't already exist
+            dir_path = os.path.dirname(full_file_path)
+            if not os.path.exists(dir_path):
+                os.mkdir(dir_path)
+            # write to the objects file
             with open(full_file_path, "wb") as f:
                 f.write(full_content)
         return blob_hash        

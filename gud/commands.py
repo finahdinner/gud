@@ -18,7 +18,14 @@ from .classes import (
 
 def test(invocation):
     print("This is a test command!")
-
+    import os
+    file_path = os.path.join("/home/hanif/gud", "notes.txt")
+    my_blob = Blob(invocation.repo)
+    file_hash = my_blob.serialise(file_path, write_to_file=True)
+    print(file_hash)
+    file_contents = my_blob.deserialise(file_hash)
+    print(file_contents)
+    
 
 def hello(invocation):
     name = invocation.args.get("name")
