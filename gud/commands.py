@@ -77,7 +77,7 @@ def config(invocation):
         ).ask().lower()
         repo_or_global = questionary.select(
             f"Would you like to {view_or_edit} this repository's configuration settings, or the global configuration settings?",
-            ["Repository", "global"]
+            ["Repository", "Global"]
         ).ask().lower()
     else:
         if invocation.args["edit"]:
