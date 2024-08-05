@@ -81,3 +81,7 @@ Example with a .py file:
     Compressed size at level 7: 791
     Compressed size at level 8: 791
     Compressed size at level 9: 791
+
+
+# TODO - implement .gud/refs/heads - 1 file per branch (might as well have a main branch even if i dont allow branching)
+- stores the commit hash of the HEAD of the branch
