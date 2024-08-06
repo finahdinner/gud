@@ -154,7 +154,29 @@ def status(invocation):
     - additionally, 
     """
     # parse the index to get the latest virtual "tree"
-    ...
+    repo_root = invocation.repo.root
+    indexed_files = invocation.repo.index
+    ignored_files = invocation.repo.ignored_files
+    # reaching every file
+    num_files = 0
+    for root, subdirs, files in os.walk(repo_root):
+        for file in files:
+            full_path = os.path.join(root, file)
+            rel_path = os.path.relpath(full_path, repo_root) # path relative to root of the repo
+
+            if rel_path not in ignored_files:
+                indexed_file = indexed_files(rel_path, None)
+                if indexed_file:
+                    ...
+            else: # untracked files
+                ...
+
+
+
+
+            print(rel_path)
+            num_files += 1
+    print(f"{num_files=}")
 
 
 def stage(invocation):

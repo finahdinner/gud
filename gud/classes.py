@@ -9,7 +9,7 @@ from .config import (
     GlobalConfig,
     RepoConfig,
 )
-from .globals import COMPRESSION_LEVEL
+from .globals import COMPRESSION_LEVEL, CSV_DELIMITER
 import platform
 import zlib
 from hashlib import sha1
@@ -65,9 +65,10 @@ class Repository:
         self.global_config = GlobalConfig()
         self.repo_config = RepoConfig(repo_path=self.path)
 
-        # the "effective" config - combination of global and repo-specific settings
         if not create_new_repo:
             self.config = self.resolve_working_config()
+            self.index = self.parse_index()
+            self.ignored_files = self.parse_gudignore()
 
     def create_repo(self) -> None:
         """
@@ -105,6 +106,22 @@ class Repository:
         """
         global_config = self.global_config.get_config()
         self.repo_config.set_config(global_config)
+
+    def parse_index(self) -> dict:
+        index_path = os.path.join(self.path, "index")
+        indexed_files = {}
+        with open(index_path, "r", encoding="utf-8") as f:
+            lines = [line.strip() for line in f.readlines()]
+            for line in lines:
+                file_mode, file_hash, file_path = line.split(CSV_DELIMITER)
+                indexed_files[file_path] = {
+                    "mode": file_mode,
+                    "hash": file_hash
+                }
+        return indexed_files
+    
+    def parse_gudignore(self) -> list:
+        ...
 
     @staticmethod
     def find_repo_root_dir(curr_path) -> str:
