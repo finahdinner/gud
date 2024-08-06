@@ -142,7 +142,6 @@ def ignoring(invocation) -> None:
     Find all .gudignore files, and print them out in stdout
     Make sure to label each file above its contents, and make it clear/well-formatted
     """
-    # TODO - implement this properly
     repo_root = invocation.repo.root
     all_ignored_file_paths = get_all_ignored_files(repo_root)
     if not all_ignored_file_paths:
@@ -197,31 +196,28 @@ def stage(invocation):
             ["Add", "Remove"]
         ).ask().lower()
 
+    # TODO - implement a function to filter the paths, and pass it as the file_filter argument in questionary.path
+    # the filter should probably not include files that are being tracked and haven't been modified since the last commit
+
+    paths_specified = []
+    while True:
+        # TODO - consider whether to show relative to the repo root by default, or just the cwd (as it is now)
+        path = questionary.path(
+            f"Search for a file/directory to {'remove from' if action == 'remove' else 'add to'} the staging area (leave blank to finish):"
+        ).ask()
+        if not path.strip():
+            break
+        paths_specified.append(path)
+    
+    # FOR TESTING - TODO - REMOVE
+    print("You specified the following paths:")
+    for path in paths_specified:
+        print(path)
+
     if action == "add":
-        files_to_add = []
-        files_not_staged = [] # TODO - generate a list of files that are NOT in the staging area
-        while True:
-            file = questionary.select(
-                "Select a file to add to the staging area",
-                files_not_staged
-            ).ask().lower()
-            # TODO - add a way to allow the user to break the loop
-            if not file.strip():
-                break
-            files_to_add.append(file)
-        # TODO - with these files_to_add, add them all to the staging area here
+        # TODO - add to the staging area
+        ...
 
     elif action == "remove":
-
-        files_to_remove = []
-        files_that_are_staged = [] # TODO - generate a list of files that are NOT in the staging area
-        while True:
-            file = questionary.select(
-                "Select a file to add to the staging area",
-                files_that_are_staged
-            ).ask().lower()
-            # TODO - add a way to allow the user to break the loop
-            if not file.strip():
-                break
-            files_to_remove.append(file)
-        # TODO - with these files_to_remove, remove them all to the staging area here
+        # TODO - remove from the staging area
+        ...

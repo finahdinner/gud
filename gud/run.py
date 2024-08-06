@@ -8,7 +8,8 @@ from .commands import (
     init,
     config,
     ignoring,
-    status
+    status,
+    stage
 )
 
 
@@ -34,13 +35,13 @@ repo_or_default.add_argument("--global", "-g", action="store_true", help="Access
 
 ignoring_subparser = subparsers.add_parser('ignoring', help="View which files Gud is currently set to ignore")
 
-# TODO - implement these
 status_subparser = subparsers.add_parser('status', help="View all staged and unstaged files")
 
-# stage_subparser = subparsers.add_parser('stage', help="Add or remove file(s) to or from the staging area")
-# add_or_remove = stage_subparser.add_mutually_exclusive_group(required=False)
-# add_or_remove.add_argument("--add", "-a", action="store_true", help="Add file(s) the staging area")
-# add_or_remove.add_argument("--remove", "-r", action="store_true", help="Remove file(s) from the staging area")
+stage_subparser = subparsers.add_parser('stage', help="Add or remove file(s) to or from the staging area")
+add_or_remove = stage_subparser.add_mutually_exclusive_group(required=False)
+add_or_remove.add_argument("--add", "-a", action="store_true", help="Add file(s) the staging area")
+add_or_remove.add_argument("--remove", "-r", action="store_true", help="Remove file(s) from the staging area")
+file_name = stage_subparser.add_argument("file_name", nargs="?", help="A specified file or directory to add/remove to/from the staging area")
 
 # commit_subparser = subparsers.add_parser('config', help="Commit staged files to the repository's history")
 
@@ -67,6 +68,8 @@ def main():
             ignoring(invocation)
         case "status":
             status(invocation)
+        case "stage":
+            stage(invocation)
 
 
 if __name__ == "__main__":
