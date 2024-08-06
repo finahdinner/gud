@@ -79,6 +79,16 @@ class Repository:
         # create objects dir
         objects_dir_path = os.path.join(self.path, "objects/")
         os.mkdir(objects_dir_path)
+        # create heads dir, with main branch file
+        heads_dir_path = os.path.join(self.path, "heads/")
+        os.mkdir(heads_dir_path)
+        main_head_path = os.path.join(heads_dir_path, "main")
+        with open(main_head_path, "w") as f:
+            pass # (initially empty)
+        # create HEAD
+        head_path = os.path.join(self.path, "HEAD")
+        with open(head_path, "w") as f:
+            f.write("main") # store the name of the branch it is pointing to
   
     def resolve_working_config(self) -> ConfigParser:
         """
