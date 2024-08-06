@@ -9,7 +9,9 @@ from .helpers import (
     is_valid_username,
     is_valid_email,
     open_relevant_editor,
-    get_default_file_from_package_installation
+    get_default_file_from_package_installation,
+    parse_gudignore_in_dir,
+    get_all_ignored_files
 )
 from .classes import (
     Blob,
@@ -134,14 +136,21 @@ def config(invocation):
             print(f.read())
 
 
-def ignoring(invocation):
+def ignoring(invocation) -> None:
     """
     Show all files in this repository that Gud is set to ignore
     Find all .gudignore files, and print them out in stdout
     Make sure to label each file above its contents, and make it clear/well-formatted
     """
-    # TODO - implement
-    ...
+    # TODO - implement this properly
+    repo_root = invocation.repo.root
+    all_ignored_file_paths = get_all_ignored_files(repo_root)
+    if not all_ignored_file_paths:
+        print(f"No files/folders are being ignored in this repository ({invocation.repo.path})")
+    else:
+        print(f"Gud is ignoring the following files/folders in this repository ({invocation.repo.path}):\n")
+        for file_path in sorted(all_ignored_file_paths):
+            print(file_path)
 
 
 def status(invocation):
@@ -161,33 +170,21 @@ def status(invocation):
     changed_files = {}
     untracked_files = {}
 
-    # scan every .gudignore first, to build a full list of gudignore files
-    all_ignored_file_paths = set() # contains full file paths
-    for root, subdirs, files in os.walk(repo_root):
-        if ".gudignore" in files:
-            ignored_file_paths = invocation.repo.parse_gudignore(root)
-            all_ignored_file_paths.update(ignored_file_paths)
-
+    all_ignored_file_paths = get_all_ignored_files(repo_root)
     for root, subdirs, files in os.walk(repo_root):
         for file_path in files:
             full_path = os.path.join(root, file_path)
             # check if the file is ignored
-            if full_path in ignored_file_paths:
+            if full_path in all_ignored_file_paths:
                 continue
             # check if the file is in the index
             rel_path = os.path.relpath(full_path, repo_root) # path relative to root of the repo
             indexed_file = indexed_files(rel_path, None)
             if not indexed_file:
+                # TODO - implement
                 ...
-
-
-
-            if rel_path not in ignored_file_paths:
-                indexed_file = indexed_files(rel_path, None)
-                if indexed_file:
-                    # check file permissions and hash the file, and see if either of those have changed
-                    ...
-            else: # untracked files
+            else:
+                # check file permissions and hash the file, and see if either of those have changed
                 ...
 
 

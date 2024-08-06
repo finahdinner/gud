@@ -60,3 +60,34 @@ def get_default_file_from_package_installation(file_name) -> None|str:
     loc_dir = os.path.dirname(loc)
     default_file_path = realpath(os.path.join(loc_dir, "defaults", file_name))
     return default_file_path
+
+
+def parse_gudignore_in_dir(parent_dir) -> set:
+    """ parent_dir is the directory where a specific gudignore exists """
+    gudignore_path = os.path.join(parent_dir, ".gudignore")
+    if not os.path.exists(gudignore_path):
+        raise Exception(f"Gudignore file does not exist in {parent_dir}")
+    ignored_file_paths = set()
+    with open(gudignore_path, "r", encoding="utf-8") as f:
+        file_paths = [line.strip() for line in f.readlines() if line.strip()]
+        for file_path in file_paths:
+            full_file_path = os.path.join(parent_dir, file_path)
+            ignored_file_paths.add(full_file_path)
+    return ignored_file_paths
+
+
+def get_all_ignored_files(initial_dir, as_rel_path=False) -> set:
+    """
+    as_rel_path determines if the paths returned are relative to the initial_dir or not
+    """
+    # TODO - determine if I will ever use as_rel_path
+    all_ignored_file_paths = set() # contains full file paths
+    for root, subdirs, files in os.walk(initial_dir):
+        if ".gudignore" in files:
+            ignored_file_paths = parse_gudignore_in_dir(root)
+            if as_rel_path:
+                rel_paths = set(os.path.relpath(file_path, initial_dir) for file_path in ignored_file_paths)
+                all_ignored_file_paths.update(rel_paths)
+            else:
+                all_ignored_file_paths.update(ignored_file_paths)
+    return all_ignored_file_paths

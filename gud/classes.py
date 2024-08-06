@@ -130,20 +130,6 @@ class Repository:
         return indexed_files
     
     @staticmethod
-    def parse_gudignore(parent_dir) -> set:
-        """ parent_dir is the directory where a specific gudignore exists """
-        gudignore_path = os.path.join(parent_dir, ".gudignore")
-        if not os.path.exists(gudignore_path):
-            raise Exception(f"Gudignore file does not exist in {parent_dir}")
-        ignored_file_paths = set()
-        with open(gudignore_path, "r", encoding="utf-8") as f:
-            file_paths = [line.strip() for line in f.readlines() if line.strip()]
-            for file_path in file_paths:
-                full_file_path = os.path.join(parent_dir, file_path)
-                ignored_file_paths.add(full_file_path)
-        return ignored_file_paths
-
-    @staticmethod
     def find_repo_root_dir(curr_path) -> str:
         """
         Recurse up the path tree to find the parent dir of
