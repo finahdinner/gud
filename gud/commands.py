@@ -201,7 +201,12 @@ def stage(invocation):
 
     paths_specified = []
     while True:
-        # TODO - consider whether to show relative to the repo root by default, or just the cwd (as it is now)
+        # TODO - change this bit to show ALL the files staged for commit, not just the files being added right now
+        if paths_specified:
+            print("Files/directories currently staged for commit:")
+            for path in paths_specified:
+                print(path)
+        ####
         path = questionary.path(
             f"Search for a file/directory to {'remove from' if action == 'remove' else 'add to'} the staging area (leave blank to finish):"
         ).ask()

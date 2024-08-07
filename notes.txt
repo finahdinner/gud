@@ -52,10 +52,10 @@ pip install dist/<package>.whl
 ## quick command for the above two
 
 linux:
-rm -rf .gud/ && rm .gudignore && python setup.py sdist bdist_wheel && pip install dist/gud_finahdinner-0.1-py3-none-any.whl --force-reinstall
+rm -rf .gud/ && python setup.py sdist bdist_wheel && pip install dist/gud_finahdinner-0.1-py3-none-any.whl --force-reinstall
 
 windows (cmd):
-rmdir /s /q .gud && del .gudignore && python setup.py sdist bdist_wheel && pip install dist\gud_finahdinner-0.1-py3-none-any.whl --force-reinstall
+rmdir /s /q .gud && python setup.py sdist bdist_wheel && pip install dist\gud_finahdinner-0.1-py3-none-any.whl --force-reinstall
 
 -- Docker --
 
