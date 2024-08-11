@@ -85,3 +85,7 @@ Example with a .py file:
 
 # TODO - implement .gud/refs/heads - 1 file per branch (might as well have a main branch even if i dont allow branching)
 - stores the commit hash of the HEAD of the branch
+
+the index file format:
+- the mode (first number, usually 100644) is in OCTAL. it maps to 33188 in decimal (which is
+what is returned when you do `os.stat(file_path).st_mode`)
