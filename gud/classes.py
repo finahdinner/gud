@@ -89,6 +89,10 @@ class Repository:
         head_path = os.path.join(self.path, "HEAD")
         with open(head_path, "w") as f:
             f.write("main") # store the name of the branch it is pointing to
+        # create index
+        index_path = os.path.join(self.path, "index")
+        with open(index_path, "w") as f:
+            pass
   
     def resolve_working_config(self) -> ConfigParser:
         """
