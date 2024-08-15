@@ -13,6 +13,7 @@ from .globals import COMPRESSION_LEVEL, CSV_DELIMITER
 import platform
 import zlib
 from hashlib import sha1
+from questionary import Validator, ValidationError
 
 
 class CommandInvocation:
@@ -299,3 +300,16 @@ class Index:
             Remove a single file from the index
             """
             ...
+
+
+class PathValidator(Validator):
+    def validate(self, document):
+        """
+        The path must either be blank, in which case the user can 'complete' their selection
+        or it must exist as a file path 
+        """
+        path = document.text.strip()
+        if path != "" and not os.path.exists(path):
+            raise ValidationError(
+                message="Path does not exist"
+            )

@@ -4,6 +4,7 @@ import os
 import subprocess
 import importlib.util
 from os.path import realpath
+from pathlib import Path
 
 
 class EnumWrapper(Enum):
@@ -91,3 +92,17 @@ def get_all_ignored_files(initial_dir, as_rel_path=False) -> set:
             else:
                 all_ignored_file_paths.update(ignored_file_paths)
     return all_ignored_file_paths
+
+
+def format_path_for_gudignore(path_str):
+    """
+    1) posix-style file path
+    2) ends in backslash if the path is a directory
+    """
+    path = Path(path_str)
+    path_posix = path.as_posix()
+    # ensure dirs end in a slash
+    if path.is_dir():
+        if not path_posix.endswith("/"):
+            return path_posix + "/"
+    return path_posix

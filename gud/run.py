@@ -33,7 +33,7 @@ view_or_edit.add_argument("--edit", "-e", action="store_true", help="Edit config
 repo_or_default = config_subparser.add_mutually_exclusive_group(required=False)
 repo_or_default.add_argument("--global", "-g", action="store_true", help="Access the global configuration options")
 
-ignoring_subparser = subparsers.add_parser('ignoring', help="View which files Gud is currently set to ignore")
+ignoring_subparser = subparsers.add_parser('ignore', help="View which files Gud is currently set to ignore")
 
 status_subparser = subparsers.add_parser('status', help="View all staged and unstaged files")
 

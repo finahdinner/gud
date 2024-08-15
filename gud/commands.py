@@ -11,12 +11,14 @@ from .helpers import (
     open_relevant_editor,
     get_default_file_from_package_installation,
     parse_gudignore_in_dir,
-    get_all_ignored_files
+    get_all_ignored_files,
+    format_path_for_gudignore
 )
 from .classes import (
     Blob,
     Tree,
-    Commit
+    Commit,
+    PathValidator
 )
 import os
 
@@ -41,6 +43,13 @@ def hello(invocation):
 
 
 def init(invocation):
+
+    global_config = invocation.repo.global_config.get_config()
+
+    # questionary.text(
+    #     "text thing",
+    #     validate=PathValidator()
+    # ).ask()
     
     if invocation.args["global_config"]:
 
@@ -54,7 +63,7 @@ def init(invocation):
         repo_config.add_section("user")
         repo_config.add_section("repo")
 
-        username_prompt = f"Username? (leave blank to use default global username):"
+        username_prompt = f"Username? (leave blank to use {global_config['user']['name']}):"
         while True:
             username = questionary.text(username_prompt).ask()
             if not username: # default to global username
@@ -66,7 +75,7 @@ def init(invocation):
                 username_prompt = "Invalid username, please try another (must be between 1 and 16 characters):"
         repo_config["user"]["name"] = username
 
-        email_prompt = "Email address? (leave blank to use default global email address):"
+        email_prompt = f"Email address? (leave blank to use {global_config['user']['email']}):"
         while True:
             email_address = questionary.text(email_prompt).ask()
             if not email_address: # default to global email address
@@ -78,16 +87,34 @@ def init(invocation):
                 email_prompt = "Invalid email address, please try another:"
         repo_config["user"]["email"] = email_address
 
-        gudignore_prompt = "Do you want Gud to not track any files? (You can change this later)"
+        gudignore_prompt = "Are there any files or folders you do not want Gud to track?"
         answer = questionary.select(gudignore_prompt, ["No", "Yes"]).ask()
         if answer.lower() == "yes":
+            paths_to_ignore = set()
+            while True: # loop for selecting multiple files
+                if paths_to_ignore:
+                    print("Files/directories that will be ignored:")
+                    for path in paths_to_ignore:
+                        print(path)
+                path = questionary.path(
+                    f"Search for a file/directory to for Gud to ignore (enter blank when finished):",
+                    validate=PathValidator()
+                ).ask()
+                if path == "":
+                    break
+                paths_to_ignore.add(format_path_for_gudignore(path))
+            # create and save the .gudignore file, including comments from the default gudignore file in the installation
             default_gudignore_file = get_default_file_from_package_installation("gudignore")
             if not default_gudignore_file:
                 raise Exception("Default gudignore file not found - possibly corrupted installation.")
             repo_gudignore_path = os.path.join(invocation.repo.root, ".gudignore")
-            shutil.copyfile(default_gudignore_file, repo_gudignore_path)
-            print(f"Opening {repo_gudignore_path}...\nClose editor to continue...")
-            open_relevant_editor(invocation.os, repo_gudignore_path)
+            with open(default_gudignore_file, "r", encoding="utf-8") as default_file:
+                default_comments = [line for line in default_file.readlines() if line.strip()]
+                with open(repo_gudignore_path, "w", encoding="utf-8") as repo_file:
+                    repo_file.writelines(default_comments)
+                    repo_file.write("\n")
+                    repo_file.writelines([f"{path}\n" for path in paths_to_ignore])
+            print("Note: If you wish to change which files Gud ignores, modify and save the .gudignore file at any time.")
 
         invocation.repo.create_repo()
         invocation.repo.repo_config.set_config(repo_config)
