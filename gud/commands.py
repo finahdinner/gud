@@ -47,7 +47,7 @@ def init(invocation):
     global_config = invocation.repo.global_config.get_config()
 
     if invocation.args["is_default"]:
-        
+
         invocation.repo.create_repo()
         repo_config = invocation.repo.copy_global_to_repo_config()
         print("--global-config flag provided: using global config options...")
@@ -119,34 +119,28 @@ def init(invocation):
 
 def config(invocation):
 
-    # determine which modes the user wants
-    if not invocation.args["view"] and not invocation.args["edit"]:
-        # if the --global flag is passed, but neither --view nor --edit is specified, this is invalid usage
-        if invocation.args["global"]:
-            sys.exit("Since you provided a --global flag, you must also provide either a --view or --edit flag.")
-        # otherwise, this means no flags were provided
+    view_or_edit = invocation.args["view_or_edit"]
+    repo_or_global = invocation.args["repo_or_global"]
+
+    # if "repo" is passed, convert to more verbose version for later
+    if repo_or_global == "repo":
+        repo_or_global = "repository"
+
+    if not view_or_edit:
         view_or_edit = questionary.select(
             "Would you like to view or edit a config file?",
             ["View", "Edit"]
         ).ask().lower()
+
+    if not repo_or_global:
         repo_or_global = questionary.select(
             f"Would you like to {view_or_edit} this repository's configuration settings, or the global configuration settings?",
             ["Repository", "Global"]
         ).ask().lower()
-    else:
-        if invocation.args["edit"]:
-            view_or_edit = "edit"
-        else:
-            view_or_edit = "view"
-        if invocation.args["global"]:
-            repo_or_global = "global"
-        else:
-            repo_or_global = "repository"
 
-    # execute the command based on the modes determined above
     if repo_or_global == "global":
         config_path = invocation.repo.global_config.path
-    else: # else "repository"
+    else:
         config_path = invocation.repo.repo_config.path
 
     if view_or_edit == "edit":
