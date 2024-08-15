@@ -46,13 +46,8 @@ def init(invocation):
 
     global_config = invocation.repo.global_config.get_config()
 
-    # questionary.text(
-    #     "text thing",
-    #     validate=PathValidator()
-    # ).ask()
-    
-    if invocation.args["global_config"]:
-
+    if invocation.args["is_default"]:
+        
         invocation.repo.create_repo()
         repo_config = invocation.repo.copy_global_to_repo_config()
         print("--global-config flag provided: using global config options...")
