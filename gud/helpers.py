@@ -73,7 +73,8 @@ def parse_gudignore_in_dir(parent_dir) -> set:
         file_paths = [line.strip() for line in f.readlines() if line.strip()]
         for file_path in file_paths:
             full_file_path = os.path.join(parent_dir, file_path)
-            ignored_file_paths.add(full_file_path)
+            if not file_path.startswith("#"):
+                ignored_file_paths.add(full_file_path)
     return ignored_file_paths
 
 

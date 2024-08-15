@@ -30,7 +30,7 @@ config_subparser = subparsers.add_parser('config', help="View or edit configurat
 config_subparser.add_argument("view_or_edit", nargs="?", choices=["view", "edit"], help="Choose to view or edit config files")
 config_subparser.add_argument("repo_or_global", nargs="?", choices=["global", "repo"], help="Global or repository-specific config files")
 
-# ignoring_subparser = subparsers.add_parser('ignore', help="View which files Gud is currently set to ignore")
+ignoring_subparser = subparsers.add_parser('ignoring', help="View which files Gud is currently set to ignore")
 
 # status_subparser = subparsers.add_parser('status', help="View all staged and unstaged files")
 
