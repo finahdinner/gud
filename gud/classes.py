@@ -146,8 +146,9 @@ class Repository:
         with open(index_path, "r", encoding="utf-8") as f:
             lines = [line.strip() for line in f.readlines()]
             for line in lines:
-                file_mode, file_hash, file_path = line.split(" ")
+                file_mode, file_type, file_hash, file_path = line.split(" ")
                 indexed_files[file_path] = {
+                    "type": file_type,
                     "mode": file_mode,
                     "hash": file_hash
                 }
@@ -158,8 +159,9 @@ class Repository:
         with open(index_path, "w", encoding="utf-8") as f:
             for file_path in new_index_dict:
                 file_mode = new_index_dict[file_path]["mode"]
+                file_type = new_index_dict[file_path]["type"]
                 file_hash = new_index_dict[file_path]["hash"]
-                f.write(f"{file_mode} {file_hash} {file_path}\n")
+                f.write(f"{file_mode} {file_type} {file_hash} {file_path}\n")
     
     @staticmethod
     def find_repo_root_dir(curr_path) -> str:
@@ -335,7 +337,7 @@ class PathValidatorQuestionary(Validator):
         The path must either be blank, in which case the user can 'complete' their selection
         or it must exist as a file path 
         """
-        path = document.text.strip()
+        path = os.path.expanduser(document.text.strip()) # expanduser converts ~ to /home/<username>
         if (path == "/") or (path != "" and not os.path.exists(path)):
             raise ValidationError(
                 message="Path is not valid"

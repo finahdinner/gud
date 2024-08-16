@@ -190,33 +190,42 @@ def stage(invocation):
             if path == "":
                 break
             # check if the path exists within the repository
-            abs_path = os.path.abspath(path)
-            rel_path = os.path.relpath(path, invocation.repo.root) # relative to the repo root
+            abs_path = os.path.abspath(os.path.expanduser(path)) # expanduser expands the ~
             if os.path.commonprefix([abs_path, invocation.repo.root]) != invocation.repo.root:
                 print(f"Path {path} does not exist within the repository, so cannot be {connective} the staging area")
                 continue
-            paths_specified.add(rel_path) # store the rel path
+            paths_specified.add(abs_path) # store the rel path
             print(f"Files/directories to be {connective} the staging area:")
             for path in paths_specified:
                 print(path)
 
+    # convert all paths to rel_paths - this is how they will be stored in the index
+    rel_paths_specified = [os.path.relpath(path, invocation.repo.root) for path in paths_specified]
+
     if action == "add":
         index = invocation.repo.parse_index()
-        for rel_path in paths_specified:
+        for rel_path in rel_paths_specified:
             abs_path = os.path.join(invocation.repo.root, rel_path)
-            if os.path.isfile(abs_path):
+            if os.path.isfile(abs_path): # blob
                 blob = Blob(repo=invocation.repo)
                 file_hash = blob.serialise(abs_path, write_to_file=True)
                 file_mode = get_file_mode(abs_path)
-                # TODO - update the index
                 index[rel_path] = {
+                    "type": "blob",
                     "mode": file_mode,
                     "hash": file_hash
                 }
+            elif os.path.isdir(abs_path): # tree
+                raise NotImplementedError("Adding directories has not been implemented yet")
         invocation.repo.write_to_index(index)
 
     elif action == "remove":
         # TODO - remove from the staging area
+        # if a file is 'removed' from the staging area, this just means to replace its line in
+        # the index with the file info from the last commit
+        # if the file didn't exist in the last commit, the line in index will be removed
+        # if it did exist in the last commit, the line will just be modified to reflect
+        # the version of the file as it was at the last commit
         raise NotImplementedError("'Remove' has not been implemented yet.")
 
 
