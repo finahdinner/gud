@@ -1,7 +1,7 @@
 import argparse
 import sys
 import os
-from .classes import CommandInvocation
+from .classes import CommandInvocation, PathValidatorArgparse
 from .commands import (
     test,
     hello,
@@ -32,13 +32,12 @@ config_subparser.add_argument("repo_or_global", nargs="?", choices=["global", "r
 
 ignoring_subparser = subparsers.add_parser('ignoring', help="View which files Gud is currently set to ignore")
 
-# status_subparser = subparsers.add_parser('status', help="View all staged and unstaged files")
+stage_subparser = subparsers.add_parser('stage', help="Add or remove file(s) to or from the staging area")
+add_or_remove = stage_subparser.add_argument('add_or_remove', nargs="?", choices=["add", "remove"], help="Add or remove from the staging area")
+# file_names is a list of zero or more files
+file_names = stage_subparser.add_argument("file_name", nargs="*", action=PathValidatorArgparse, help="A specified file or directory to add/remove to/from the staging area")
 
-# stage_subparser = subparsers.add_parser('stage', help="Add or remove file(s) to or from the staging area")
-# add_or_remove = stage_subparser.add_mutually_exclusive_group(required=False)
-# add_or_remove.add_argument("--add", "-a", action="store_true", help="Add file(s) the staging area")
-# add_or_remove.add_argument("--remove", "-r", action="store_true", help="Remove file(s) from the staging area")
-# file_name = stage_subparser.add_argument("file_name", nargs="?", help="A specified file or directory to add/remove to/from the staging area")
+# status_subparser = subparsers.add_parser('status', help="View all staged and unstaged files")
 
 # commit_subparser = subparsers.add_parser('config', help="Commit staged files to the repository's history")
 

@@ -16,9 +16,7 @@ from .helpers import (
 )
 from .classes import (
     Blob,
-    Tree,
-    Commit,
-    PathValidator
+    PathValidatorQuestionary
 )
 import os
 
@@ -93,7 +91,7 @@ def init(invocation):
                         print(path)
                 path = questionary.path(
                     f"Search for a file/directory to for Gud to ignore (enter blank when finished):",
-                    validate=PathValidator()
+                    validate=PathValidatorQuestionary()
                 ).ask()
                 if path == "":
                     break
@@ -150,22 +148,6 @@ def config(invocation):
         print(f"{repo_or_global.capitalize()} config options ({config_path}):\n")
         with open(config_path, "r", encoding="utf-8") as f:
             print(f.read())
-
-
-def ignoring(invocation) -> None:
-    """
-    Show all files in this repository that Gud is set to ignore
-    Find all .gudignore files, and print them out in stdout
-    Make sure to label each file above its contents, and make it clear/well-formatted
-    """
-    repo_root = invocation.repo.root
-    all_ignored_file_paths = get_all_ignored_files(repo_root)
-    if not all_ignored_file_paths:
-        print(f"No files/folders are being ignored in this repository ({invocation.repo.path})")
-    else:
-        print(f"Gud is ignoring the following files/folders in this repository ({invocation.repo.path}):\n")
-        for file_path in sorted(all_ignored_file_paths):
-            print(file_path)
 
 
 def status(invocation):
@@ -242,3 +224,19 @@ def stage(invocation):
     elif action == "remove":
         # TODO - remove from the staging area
         ...
+
+
+def ignoring(invocation) -> None:
+    """
+    Show all files in this repository that Gud is set to ignore
+    Find all .gudignore files, and print them out in stdout
+    Make sure to label each file above its contents, and make it clear/well-formatted
+    """
+    repo_root = invocation.repo.root
+    all_ignored_file_paths = get_all_ignored_files(repo_root)
+    if not all_ignored_file_paths:
+        print(f"No files/folders are being ignored in this repository ({invocation.repo.path})")
+    else:
+        print(f"Gud is ignoring the following files/folders in this repository ({invocation.repo.path}):\n")
+        for file_path in sorted(all_ignored_file_paths):
+            print(file_path)

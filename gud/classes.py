@@ -1,4 +1,4 @@
-from argparse import Namespace
+import argparse
 import os
 import sys
 from os.path import realpath
@@ -17,7 +17,7 @@ from questionary import Validator, ValidationError
 
 
 class CommandInvocation:
-    def __init__(self, all_args: Namespace, cwd: str):
+    def __init__(self, all_args: argparse.Namespace, cwd: str):
         self.command: str = all_args.command
         self.args: dict = __class__.get_additional_commands(all_args)
         self.cwd = cwd # current working directory
@@ -34,7 +34,7 @@ class CommandInvocation:
             self.repo = Repository(cwd)
 
     @staticmethod
-    def get_additional_commands(args: Namespace) -> dict:
+    def get_additional_commands(args: argparse.Namespace) -> dict:
         args_dict = vars(args)
         args_dict.pop("command", None)
         return args_dict
@@ -302,7 +302,7 @@ class Index:
             ...
 
 
-class PathValidator(Validator):
+class PathValidatorQuestionary(Validator):
     def validate(self, document):
         """
         The path must either be blank, in which case the user can 'complete' their selection
@@ -313,3 +313,15 @@ class PathValidator(Validator):
             raise ValidationError(
                 message="Path does not exist"
             )
+        
+
+class PathValidatorArgparse(argparse.Action):
+    def __call__(self, parser, namespace, paths, option_string=None):
+        paths_not_valid = []
+        for file_path in paths:
+            if not os.path.exists(file_path):
+                paths_not_valid.append(file_path)
+        if paths_not_valid:
+            error_msg = f"The following paths are not valid:\n{', '.join(paths_not_valid)}"
+            sys.exit(error_msg)
+        setattr(namespace, self.dest, paths)
