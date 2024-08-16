@@ -290,10 +290,11 @@ class Tree(GudObject):
         """
         index = self.repo.parse_index()
         all_path_parts = [path.split(os.sep) for path in index.keys()]
-        tree = self._build_tree(all_path_parts)
-        # TODO - use these tree structure to create the necessary files in .gud/objects
-        # the blob objects should already have been made (from gud stage add)
-        # so just need to construct trees that point to the existing hashes
+        # contains only file paths, not extra data etc
+        path_tree = self._build_path_tree(all_path_parts)
+        # TODO - use this path_tree structure to create the necessary files in .gud/objects
+        
+
 
     def get_content(self, tree_hash) -> bytes:
         """
@@ -312,7 +313,7 @@ class Tree(GudObject):
             tree[dir] = {} # dict represents a directory
         self._insert_path_into_tree(tree[dir], path_parts=path_parts[1:])
 
-    def _build_tree(self, all_path_parts: list[list]) -> dict:
+    def _build_path_tree(self, all_path_parts: list[list]) -> dict:
         """
         each dir is represented by a dictionary
         a dir can contain:
