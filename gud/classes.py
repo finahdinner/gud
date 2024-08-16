@@ -161,7 +161,7 @@ class Repository:
         with open(index_path, "r", encoding="utf-8") as f:
             lines = [line.strip() for line in f.readlines()]
             for line in lines:
-                file_mode, file_type, file_hash, file_path = line.split(" ")
+                file_mode, file_type, file_hash, file_path = line.split("\t")
                 indexed_files[file_path] = {
                     "type": file_type,
                     "mode": file_mode,
@@ -176,7 +176,7 @@ class Repository:
                 file_mode = new_index_dict[file_path]["mode"]
                 file_type = new_index_dict[file_path]["type"]
                 file_hash = new_index_dict[file_path]["hash"]
-                f.write(f"{file_mode} {file_type} {file_hash} {file_path}\n")
+                f.write(f"{file_mode}\t{file_type}\t{file_hash}\t{file_path}\n")
     
     @staticmethod
     def find_repo_root_dir(curr_path) -> str:
@@ -284,7 +284,9 @@ class Tree(GudObject):
     you should start from the DEEPEST node and work your way up
     """
     def serialise(self, index_dict):
-        ...
+        """
+        - read the current index and create and save a tree object from it
+        """
 
 
     def get_content(self, tree_hash) -> bytes:

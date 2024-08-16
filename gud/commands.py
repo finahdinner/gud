@@ -195,6 +195,7 @@ def stage(invocation):
                 print(f"Path {path} does not exist within the repository, so cannot be {connective} the staging area")
                 continue
             paths_specified.add(abs_path) # store the rel path
+            # TODO - instead of the below, call gud status (once implemented) between each file selection
             print(f"Files/directories to be {connective} the staging area:")
             for path in paths_specified:
                 print(path)
