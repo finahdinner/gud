@@ -128,7 +128,6 @@ class Repository:
             raise Exception(f"Commit starting with hash {hash} is not unique. Please be more specific.")
         # check if it's a commit (raise an error if it's a blob or tree)
 
-  
     def resolve_working_config(self) -> ConfigParser:
         """
         Combine the global config and repo-specific config settings
@@ -196,6 +195,7 @@ class Repository:
 
 class GudObject:
     def __init__(self, repo: Repository):
+        self.repo = repo
         self.objects_dir = os.path.join(repo.path, "objects")
 
     def deserialise(self, blob_hash, expected_type=None) -> bytes:
@@ -283,11 +283,17 @@ class Tree(GudObject):
     As trees point to subdirectory trees, when creating a tree object,
     you should start from the DEEPEST node and work your way up
     """
-    def serialise(self, index_dict):
+    def serialise(self):
         """
         - read the current index and create and save a tree object from it
+        - creating the tree involves grouping the children of each directory
         """
-
+        index = self.repo.parse_index()
+        all_path_parts = [path.split(os.sep) for path in index.keys()]
+        tree = self._build_tree(all_path_parts)
+        # TODO - use these tree structure to create the necessary files in .gud/objects
+        # the blob objects should already have been made (from gud stage add)
+        # so just need to construct trees that point to the existing hashes
 
     def get_content(self, tree_hash) -> bytes:
         """
@@ -295,6 +301,28 @@ class Tree(GudObject):
         """
         file_content = super().deserialise(tree_hash, expected_type="tree")
         return file_content
+    
+    def _insert_path_into_tree(self, tree, path_parts):
+        if len(path_parts) == 1: # this is a file
+            file_name = path_parts[0]
+            tree[file_name] = None # None represents a file
+            return
+        dir = path_parts[0]
+        if dir not in tree:
+            tree[dir] = {} # dict represents a directory
+        self._insert_path_into_tree(tree[dir], path_parts=path_parts[1:])
+
+    def _build_tree(self, all_path_parts: list[list]) -> dict:
+        """
+        each dir is represented by a dictionary
+        a dir can contain:
+            - other dirs (which are dicts)
+            - files (represented by None)
+        """
+        tree = {}
+        for path_parts in all_path_parts:
+            self._insert_path_into_tree(tree, path_parts)
+        return tree
 
 class Commit(GudObject):
     def serialise(self) -> str:

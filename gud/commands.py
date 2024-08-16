@@ -1,22 +1,20 @@
 """
 All of these are commands that will ultimately be used as `gud <command_name>`
 """
-import sys
 import questionary
-import shutil
 from configparser import ConfigParser
 from .helpers import (
     is_valid_username,
     is_valid_email,
     open_relevant_editor,
     get_default_file_from_package_installation,
-    parse_gudignore_in_dir,
     get_all_ignored_files,
     format_path_for_gudignore,
     get_file_mode
 )
 from .classes import (
     Blob,
+    Tree,
     PathValidatorQuestionary
 )
 import os
@@ -25,12 +23,15 @@ import os
 def test(invocation):
     print("This is a test command!")
     import os
-    file_path = os.path.join("/home/hanif/gud", "notes.txt")
-    my_blob = Blob(invocation.repo)
-    file_hash = my_blob.serialise(file_path, write_to_file=True)
-    print(file_hash)
-    file_contents = my_blob.get_content(file_hash)
-    print(file_contents)
+    tree = Tree(invocation.repo)
+    tree.serialise()
+    
+    # file_path = os.path.join("/home/hanif/gud", "notes.txt")
+    # my_blob = Blob(invocation.repo)
+    # file_hash = my_blob.serialise(file_path, write_to_file=True)
+    # print(file_hash)
+    # file_contents = my_blob.get_content(file_hash)
+    # print(file_contents)
     
 
 def hello(invocation):
