@@ -107,3 +107,13 @@ def format_path_for_gudignore(path_str):
         if not path_posix.endswith("/"):
             return path_posix + "/"
     return path_posix
+
+
+def get_file_mode(file_path):
+    """
+    Returns a 6 digit octal number
+    First 3 digits represent the file type (100 means normal file)
+    The next 3 digits show the file mode for user, group, others (respectively)
+    See https://docs.nersc.gov/filesystems/unix-file-permissions/ for an explanation
+    """
+    return oct(os.stat(file_path).st_mode).replace("0o", "")

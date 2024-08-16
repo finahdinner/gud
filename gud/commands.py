@@ -12,7 +12,8 @@ from .helpers import (
     get_default_file_from_package_installation,
     parse_gudignore_in_dir,
     get_all_ignored_files,
-    format_path_for_gudignore
+    format_path_for_gudignore,
+    get_file_mode
 )
 from .classes import (
     Blob,
@@ -200,11 +201,14 @@ def stage(invocation):
                 print(path)
 
     if action == "add":
-        abs_paths = []
         for rel_path in paths_specified:
             abs_path = os.path.join(invocation.repo.root, rel_path)
-            abs_paths.append(abs_path)
-            print(abs_path)
+            if os.path.isfile(abs_path):
+                blob = Blob(repo=invocation.repo)
+                file_hash = blob.serialise(abs_path, write_to_file=True)
+                file_mode = get_file_mode(abs_path)
+                # TODO - update the index
+                print(file_mode, file_hash, rel_path)
 
     elif action == "remove":
         # TODO - remove from the staging area
