@@ -194,10 +194,36 @@ class Repository:
         return curr_path   
 
 
-class Blob:
+class GudObject:
     def __init__(self, repo: Repository):
         self.objects_dir = os.path.join(repo.path, "objects")
-    
+
+    def deserialise(self, blob_hash, expected_type=None) -> bytes:
+        """
+        Serialised/stored data -> usable/readable data
+        """
+        full_file_path = self.get_full_file_path_from_hash(blob_hash)
+        with open(full_file_path, "rb") as f:
+            full_content = f.read()
+        try:
+            header, compressed_content = full_content.split(b"\0", 1) # only split on the first occurence
+        except ValueError:
+            raise ValueError("Null delimiter not found - incorrect blob format being read.")
+        type, uncompressed_size_str = header.decode().split(" ")
+        # if expecting the object to be a certain type, check it is this type
+        if expected_type:
+            assert type == expected_type
+        uncompressed_content = zlib.decompress(compressed_content)
+        assert int(uncompressed_size_str) == len(uncompressed_content)
+        return uncompressed_content
+
+    def get_full_file_path_from_hash(self, hash: str) -> str:
+        dir_name = hash[:2]
+        file_name = hash[2:]
+        return os.path.join(self.objects_dir, dir_name, file_name)
+
+
+class Blob(GudObject):    
     def serialise(self, og_file_path: str, write_to_file=False) -> str:
         """
         Usable/readable data -> serialised data for storage
@@ -232,41 +258,24 @@ class Blob:
                 f.write(full_content)
         return blob_hash        
 
-    def deserialise(self, blob_hash):
+    def get_content(self, blob_hash) -> bytes:
         """
         Serialised/stored data -> usable/readable data
         """
-        full_file_path = self.get_full_file_path_from_hash(blob_hash)
-        with open(full_file_path, "rb") as f:
-            full_content = f.read()
-        try:
-            header, compressed_content = full_content.split(b"\0", 1) # only split on the first occurence
-        except ValueError:
-            raise ValueError("Null delimiter not found - incorrect blob format being read.")
-        type, uncompressed_size_str = header.decode().split(" ")
-        assert type == "blob"
-        uncompressed_content = zlib.decompress(compressed_content)
-        assert int(uncompressed_size_str) == len(uncompressed_content)
-        # TODO - decide what to return from this function
-        return uncompressed_content
-
-    def get_full_file_path_from_hash(self, hash: str) -> str:
-        dir_name = hash[:2]
-        file_name = hash[2:]
-        return os.path.join(self.objects_dir, dir_name, file_name)
+        file_content = super().deserialise(blob_hash, expected_type="blob")
+        return file_content
 
 
-class Commit:
-    type = "commit"
-    
-    def __init__(self, data):
-        self.data = self.serialise(data)
-    
+class Commit(GudObject):    
     def serialise(self, data):
         ...
 
-    def deserialise(self):
-        ...
+    def get_content(self, commit_hash):
+        """
+        Serialised/stored data -> usable/readable data
+        """
+        file_content = super().deserialise(commit_hash, expected_type="commit")
+        return file_content
 
 
 class Tree:
@@ -286,42 +295,11 @@ class Tree:
     As trees point to subdirectory trees, when creating a tree object,
     you should start from the DEEPEST node and work your way up
     """
-
-
     def __init__(self, root_dir):
         """
         starting at the root_dir, traverse all files in the working directory
-
-
-
-
         """
         # TODO - implement
-
-
-class Index:
-    """
-    The index file is a virtual representation of what the repository views the current state
-    of the repository to be. A tree object is a snapshot of the index at a given time.
-    """
-    def __init__(self, repo_path, index_already_exists=True):
-        self.path = os.path.join(repo_path, "index")
-        if not index_already_exists:
-            # create blank index file
-            with open(self.path, "w", encoding="utf-8"):
-                pass
-
-        def add_to_index(self, object):
-            """
-            Add a single file to the index
-            """
-            ...
-
-        def remove_from_index(self):
-            """
-            Remove a single file from the index
-            """
-            ...
 
 
 class PathValidatorQuestionary(Validator):

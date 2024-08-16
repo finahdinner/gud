@@ -29,7 +29,7 @@ def test(invocation):
     my_blob = Blob(invocation.repo)
     file_hash = my_blob.serialise(file_path, write_to_file=True)
     print(file_hash)
-    file_contents = my_blob.deserialise(file_hash)
+    file_contents = my_blob.get_content(file_hash)
     print(file_contents)
     
 
