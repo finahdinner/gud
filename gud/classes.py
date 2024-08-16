@@ -68,7 +68,7 @@ class Repository:
 
         if not create_new_repo: # if the .gud dir already exists
             self.config = self.resolve_working_config()
-            self.branch = self.get_branch() # get the name of the branch
+            self.branch = self.get_current_branch() # get the name of the branch
             self.head: str|None = self.get_head() # Tget the commit of the HEAD
 
     def create_repo(self) -> None:
@@ -97,7 +97,7 @@ class Repository:
         with open(index_path, "w") as f:
             pass
 
-    def get_branch(self) -> str:
+    def get_current_branch(self) -> str:
         branch_ref_file_path = os.path.join(self.path, "BRANCH")
         with open(branch_ref_file_path, "r") as f:
             return f.read().strip()
