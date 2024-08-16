@@ -50,7 +50,7 @@ def init(invocation):
 
         invocation.repo.create_repo()
         repo_config = invocation.repo.copy_global_to_repo_config()
-        print("--global-config flag provided: using global config options...")
+        print("'default' flag provided: using global config options...")
 
     else:
 
