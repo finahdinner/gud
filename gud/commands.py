@@ -150,39 +150,20 @@ def config(invocation):
             print(f.read())
 
 
-def status(invocation):
+def ignoring(invocation) -> None:
     """
-    - hash all files in the working dir (except "ignored" ones) and compare to the current index (.gud/index)
-    (which represents the latest "tree"), and match each file to a file in the index
-    - if a file is in the working dir but not the index, label as "untracked"
-    - if a file is in the working dir AND index, but they do not match hashes/permissons, label as "changed"
-    - if a file is in the working dir AND index, and is indentical, do not list/label it
-    - additionally, 
+    Show all files in this repository that Gud is set to ignore
+    Find all .gudignore files, and print them out in stdout
+    Make sure to label each file above its contents, and make it clear/well-formatted
     """
-    # parse the index to get the latest virtual "tree"
     repo_root = invocation.repo.root
-    indexed_files = invocation.repo.parse_index()
-
-    # TODO - finish all these below
-    changed_files = {}
-    untracked_files = {}
-
     all_ignored_file_paths = get_all_ignored_files(repo_root)
-    for root, subdirs, files in os.walk(repo_root):
-        for file_path in files:
-            full_path = os.path.join(root, file_path)
-            # check if the file is ignored
-            if full_path in all_ignored_file_paths:
-                continue
-            # check if the file is in the index
-            rel_path = os.path.relpath(full_path, repo_root) # path relative to root of the repo
-            indexed_file = indexed_files(rel_path, None)
-            if not indexed_file:
-                # TODO - implement
-                ...
-            else:
-                # check file permissions and hash the file, and see if either of those have changed
-                ...
+    if not all_ignored_file_paths:
+        print(f"No files/folders are being ignored in this repository ({invocation.repo.path})")
+    else:
+        print(f"Gud is ignoring the following files/folders in this repository ({invocation.repo.path}):\n")
+        for file_path in sorted(all_ignored_file_paths):
+            print(file_path)
 
 
 def stage(invocation):
@@ -226,17 +207,36 @@ def stage(invocation):
         ...
 
 
-def ignoring(invocation) -> None:
+def status(invocation):
     """
-    Show all files in this repository that Gud is set to ignore
-    Find all .gudignore files, and print them out in stdout
-    Make sure to label each file above its contents, and make it clear/well-formatted
+    - hash all files in the working dir (except "ignored" ones) and compare to the current index (.gud/index)
+    (which represents the latest "tree"), and match each file to a file in the index
+    - if a file is in the working dir but not the index, label as "untracked"
+    - if a file is in the working dir AND index, but they do not match hashes/permissons, label as "changed"
+    - if a file is in the working dir AND index, and is indentical, do not list/label it
+    - additionally, 
     """
+    # parse the index to get the latest virtual "tree"
     repo_root = invocation.repo.root
+    indexed_files = invocation.repo.parse_index()
+
+    # TODO - finish all these below
+    changed_files = {}
+    untracked_files = {}
+
     all_ignored_file_paths = get_all_ignored_files(repo_root)
-    if not all_ignored_file_paths:
-        print(f"No files/folders are being ignored in this repository ({invocation.repo.path})")
-    else:
-        print(f"Gud is ignoring the following files/folders in this repository ({invocation.repo.path}):\n")
-        for file_path in sorted(all_ignored_file_paths):
-            print(file_path)
+    for root, subdirs, files in os.walk(repo_root):
+        for file_path in files:
+            full_path = os.path.join(root, file_path)
+            # check if the file is ignored
+            if full_path in all_ignored_file_paths:
+                continue
+            # check if the file is in the index
+            rel_path = os.path.relpath(full_path, repo_root) # path relative to root of the repo
+            indexed_file = indexed_files(rel_path, None)
+            if not indexed_file:
+                # TODO - implement
+                ...
+            else:
+                # check file permissions and hash the file, and see if either of those have changed
+                ...

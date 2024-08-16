@@ -62,10 +62,10 @@ def main():
             config(invocation)
         case "ignoring":
             ignoring(invocation)
-        case "status":
-            status(invocation)
         case "stage":
             stage(invocation)
+        case "status":
+            status(invocation)
 
 
 if __name__ == "__main__":
