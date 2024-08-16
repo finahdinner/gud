@@ -66,8 +66,10 @@ class Repository:
         self.global_config = GlobalConfig()
         self.repo_config = RepoConfig(repo_path=self.path)
 
-        if not create_new_repo:
+        if not create_new_repo: # if the .gud dir already exists
             self.config = self.resolve_working_config()
+            self.branch = self.get_branch() # get the name of the branch
+            self.head: str|None = self.get_head() # Tget the commit of the HEAD
 
     def create_repo(self) -> None:
         """
@@ -86,14 +88,31 @@ class Repository:
         main_head_path = os.path.join(heads_dir_path, "main")
         with open(main_head_path, "w") as f:
             pass # (initially empty)
-        # create HEAD
-        head_path = os.path.join(self.path, "HEAD")
+        # create BRANCH - this stores the current branch -- equivalent to git's HEAD
+        head_path = os.path.join(self.path, "BRANCH")
         with open(head_path, "w") as f:
             f.write("main") # store the name of the branch it is pointing to
         # create index
         index_path = os.path.join(self.path, "index")
         with open(index_path, "w") as f:
             pass
+
+    def get_branch(self) -> str:
+        branch_ref_file_path = os.path.join(self.path, "BRANCH")
+        with open(branch_ref_file_path, "r") as f:
+            return f.read().strip()
+
+    def get_head(self, other_branch_name=None) -> str|None:
+        """
+        other_branch_name allows this function to look for the head of other branches
+        """
+        branch_name = other_branch_name if other_branch_name else self.branch
+        branch_commit_file_path = os.path.join(self.path, "heads", branch_name)
+        with open(branch_commit_file_path, "r") as f:
+            head_commit_hash = f.read().strip()
+            if not head_commit_hash:
+                return None
+            return head_commit_hash
   
     def resolve_working_config(self) -> ConfigParser:
         """
