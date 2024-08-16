@@ -266,19 +266,7 @@ class Blob(GudObject):
         return file_content
 
 
-class Commit(GudObject):    
-    def serialise(self, data):
-        ...
-
-    def get_content(self, commit_hash):
-        """
-        Serialised/stored data -> usable/readable data
-        """
-        file_content = super().deserialise(commit_hash, expected_type="commit")
-        return file_content
-
-
-class Tree:
+class Tree(GudObject):
     """
     Imagine it as being a node in a larger tree
     This node contains 0 or more blobs
@@ -295,11 +283,27 @@ class Tree:
     As trees point to subdirectory trees, when creating a tree object,
     you should start from the DEEPEST node and work your way up
     """
-    def __init__(self, root_dir):
+    def serialise(self, index_dict):
+        ...
+
+
+    def get_content(self, tree_hash) -> bytes:
         """
-        starting at the root_dir, traverse all files in the working directory
+        Serialised/stored data -> usable/readable data
         """
-        # TODO - implement
+        file_content = super().deserialise(tree_hash, expected_type="tree")
+        return file_content
+
+class Commit(GudObject):
+    def serialise(self) -> str:
+        ...
+
+    def get_content(self, commit_hash) -> bytes:
+        """
+        Serialised/stored data -> usable/readable data
+        """
+        file_content = super().deserialise(commit_hash, expected_type="commit")
+        return file_content
 
 
 class PathValidatorQuestionary(Validator):
