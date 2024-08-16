@@ -52,6 +52,7 @@ def main():
     invocation = CommandInvocation(all_args, cwd)
 
     match invocation.command:
+        # TODO - remove test command eventually
         case "test":
             test(invocation)
         case "hello":

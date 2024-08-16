@@ -309,9 +309,9 @@ class PathValidatorQuestionary(Validator):
         or it must exist as a file path 
         """
         path = document.text.strip()
-        if path != "" and not os.path.exists(path):
+        if (path == "/") or (path != "" and not os.path.exists(path)):
             raise ValidationError(
-                message="Path does not exist"
+                message="Path is not valid"
             )
         
 

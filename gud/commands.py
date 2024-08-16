@@ -169,42 +169,46 @@ def ignoring(invocation) -> None:
 def stage(invocation):
 
     action = invocation.args.get("add_or_remove", None)
+    paths_specified = set(invocation.args.get("file_paths", []))
+
     if not action:
         action = questionary.select(
             "Would you like to add files to, or remove files from, the staging area?",
             ["Add", "Remove"]
         ).ask().lower()
+    connective = "removed from" if action == "remove" else "added to"
 
-    # TODO - implement a function to filter the paths, and pass it as the file_filter argument in questionary.path
-    # the filter should probably not include files that are being tracked and haven't been modified since the last commit
-
-    paths_specified = []
-    while True:
-        # TODO - change this bit to show ALL the files staged for commit, not just the files being added right now
-        if paths_specified:
-            print("Files/directories currently staged for commit:")
+    if not paths_specified:
+        # TODO - implement a function to filter the paths, and pass it as the file_filter argument in questionary.path
+        # the filter should probably not include files that are being tracked and haven't been modified since the last commit
+        while True: # loop for selecting multiple files
+            path = questionary.path(
+                f"Search for a file/directory to be {connective} the staging area (enter blank when finished):",
+                validate=PathValidatorQuestionary()
+            ).ask()
+            if path == "":
+                break
+            # check if the path exists within the repository
+            abs_path = os.path.abspath(path)
+            rel_path = os.path.relpath(path, invocation.repo.root) # relative to the repo root
+            if os.path.commonprefix([abs_path, invocation.repo.root]) != invocation.repo.root:
+                print(f"Path {path} does not exist within the repository, so cannot be {connective} the staging area")
+                continue
+            paths_specified.add(rel_path) # store the rel path
+            print(f"Files/directories to be {connective} the staging area:")
             for path in paths_specified:
                 print(path)
-        ####
-        path = questionary.path(
-            f"Search for a file/directory to {'remove from' if action == 'remove' else 'add to'} the staging area (leave blank to finish):"
-        ).ask()
-        if not path.strip():
-            break
-        paths_specified.append(path)
-    
-    # FOR TESTING - TODO - REMOVE
-    print("You specified the following paths:")
-    for path in paths_specified:
-        print(path)
 
     if action == "add":
-        # TODO - add to the staging area
-        ...
+        abs_paths = []
+        for rel_path in paths_specified:
+            abs_path = os.path.join(invocation.repo.root, rel_path)
+            abs_paths.append(abs_path)
+            print(abs_path)
 
     elif action == "remove":
         # TODO - remove from the staging area
-        ...
+        raise NotImplementedError("'Remove' has not been implemented yet.")
 
 
 def status(invocation):
