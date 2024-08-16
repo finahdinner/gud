@@ -9,7 +9,7 @@ from .config import (
     GlobalConfig,
     RepoConfig,
 )
-from .globals import COMPRESSION_LEVEL, CSV_DELIMITER
+from .globals import COMPRESSION_LEVEL
 import platform
 import zlib
 from hashlib import sha1
@@ -86,20 +86,20 @@ class Repository:
         heads_dir_path = os.path.join(self.path, "heads/")
         os.mkdir(heads_dir_path)
         main_head_path = os.path.join(heads_dir_path, "main")
-        with open(main_head_path, "w") as f:
+        with open(main_head_path, "w", encoding="utf-8") as f:
             pass # (initially empty)
         # create BRANCH - this stores the current branch -- equivalent to git's HEAD
         head_path = os.path.join(self.path, "BRANCH")
-        with open(head_path, "w") as f:
+        with open(head_path, "w", encoding="utf-8") as f:
             f.write("main") # store the name of the branch it is pointing to
         # create index
         index_path = os.path.join(self.path, "index")
-        with open(index_path, "w") as f:
+        with open(index_path, "w", encoding="utf-8") as f:
             pass
 
     def get_current_branch(self) -> str:
         branch_ref_file_path = os.path.join(self.path, "BRANCH")
-        with open(branch_ref_file_path, "r") as f:
+        with open(branch_ref_file_path, "r", encoding="utf-8") as f:
             return f.read().strip()
 
     def get_head(self, other_branch_name=None) -> str|None:
@@ -108,7 +108,7 @@ class Repository:
         """
         branch_name = other_branch_name if other_branch_name else self.branch
         branch_commit_file_path = os.path.join(self.path, "heads", branch_name)
-        with open(branch_commit_file_path, "r") as f:
+        with open(branch_commit_file_path, "r", encoding="utf-8") as f:
             head_commit_hash = f.read().strip()
             if not head_commit_hash:
                 return None
@@ -146,12 +146,20 @@ class Repository:
         with open(index_path, "r", encoding="utf-8") as f:
             lines = [line.strip() for line in f.readlines()]
             for line in lines:
-                file_mode, file_hash, file_path = line.split(CSV_DELIMITER)
+                file_mode, file_hash, file_path = line.split(" ")
                 indexed_files[file_path] = {
                     "mode": file_mode,
                     "hash": file_hash
                 }
         return indexed_files
+    
+    def write_to_index(self, new_index_dict) -> None:
+        index_path = os.path.join(self.path, "index")
+        with open(index_path, "w", encoding="utf-8") as f:
+            for file_path in new_index_dict:
+                file_mode = new_index_dict[file_path]["mode"]
+                file_hash = new_index_dict[file_path]["hash"]
+                f.write(f"{file_mode} {file_hash} {file_path}\n")
     
     @staticmethod
     def find_repo_root_dir(curr_path) -> str:
@@ -305,7 +313,7 @@ class Index:
         self.path = os.path.join(repo_path, "index")
         if not index_already_exists:
             # create blank index file
-            with open(self.path, "w"):
+            with open(self.path, "w", encoding="utf-8"):
                 pass
 
         def add_to_index(self, object):

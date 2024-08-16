@@ -35,7 +35,7 @@ ignoring_subparser = subparsers.add_parser('ignoring', help="View which files Gu
 stage_subparser = subparsers.add_parser('stage', help="Add or remove file(s) to or from the staging area")
 add_or_remove = stage_subparser.add_argument('add_or_remove', nargs="?", choices=["add", "remove"], help="Add or remove from the staging area")
 # file_names is a list of zero or more files
-file_names = stage_subparser.add_argument("file_name", nargs="*", action=PathValidatorArgparse, help="A specified file or directory to add/remove to/from the staging area")
+file_paths = stage_subparser.add_argument("file_paths", nargs="*", action=PathValidatorArgparse, help="A specified file or directory to add/remove to/from the staging area")
 
 # status_subparser = subparsers.add_parser('status', help="View all staged and unstaged files")
 

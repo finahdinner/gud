@@ -201,6 +201,7 @@ def stage(invocation):
                 print(path)
 
     if action == "add":
+        index = invocation.repo.parse_index()
         for rel_path in paths_specified:
             abs_path = os.path.join(invocation.repo.root, rel_path)
             if os.path.isfile(abs_path):
@@ -208,7 +209,11 @@ def stage(invocation):
                 file_hash = blob.serialise(abs_path, write_to_file=True)
                 file_mode = get_file_mode(abs_path)
                 # TODO - update the index
-                print(file_mode, file_hash, rel_path)
+                index[rel_path] = {
+                    "mode": file_mode,
+                    "hash": file_hash
+                }
+        invocation.repo.write_to_index(index)
 
     elif action == "remove":
         # TODO - remove from the staging area
