@@ -226,6 +226,12 @@ def stage(invocation):
         # if the file didn't exist in the last commit, the line in index will be removed
         # if it did exist in the last commit, the line will just be modified to reflect
         # the version of the file as it was at the last commit
+        index = invocation.repo.parse_index()
+        latest_commit = invocation.repo.head
+        
+        
+
+
         raise NotImplementedError("'Remove' has not been implemented yet.")
 
 

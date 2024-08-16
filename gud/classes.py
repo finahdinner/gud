@@ -69,7 +69,7 @@ class Repository:
         if not create_new_repo: # if the .gud dir already exists
             self.config = self.resolve_working_config()
             self.branch = self.get_current_branch() # get the name of the branch
-            self.head: str|None = self.get_head() # Tget the commit of the HEAD
+            self.head: str|None = self.get_head() # get the commit of the HEAD
 
     def create_repo(self) -> None:
         """
@@ -113,6 +113,21 @@ class Repository:
             if not head_commit_hash:
                 return None
             return head_commit_hash
+
+    def find_commit(self, hash):
+        # TODO - consider if I even need this function. could I not just use Commit.deserialise()?
+        dir_name, file_name = hash[:2], hash[2:]
+        objects_dir_path = os.path.join(self.path, "objects/")
+        commit_dir = os.path.join(objects_dir_path, dir_name)
+        if not os.path.exists(commit_dir):
+            raise Exception(f"Commit starting with hash {hash} does not exist")
+        matching_objects = [os.path.join(commit_dir, file) for file in os.listdir(commit_dir) if file.startswith(hash)]
+        if not matching_objects:
+            raise Exception(f"Commit starting with hash {hash} does not exist")
+        if len(matching_objects) > 1:
+            raise Exception(f"Commit starting with hash {hash} is not unique. Please be more specific.")
+        # check if it's a commit (raise an error if it's a blob or tree)
+
   
     def resolve_working_config(self) -> ConfigParser:
         """
@@ -177,28 +192,6 @@ class Repository:
                 break
             curr_path = parent_dir_path
         return curr_path   
-
-
-class GudObject:
-    # TODO - implement this
-    """
-    object types:
-        - blob (eg a file)
-        - tree (a snapshot of the index at a given time):
-            - this contains a list of the file hashes and file paths of objects at a given time
-        - commit:
-            - tree
-            - parent commit
-            - author/timestamp etc    
-    """
-    def __init__(self, data):
-        self.data = ...
-
-    def serialise(self):
-        ...
-
-    def deserialise(self):
-        ...
 
 
 class Blob:
