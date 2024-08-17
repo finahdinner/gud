@@ -22,16 +22,8 @@ import os
 
 def test(invocation):
     print("This is a test command!")
-    import os
     tree = Tree(invocation.repo)
     tree.serialise()
-    
-    # file_path = os.path.join("/home/hanif/gud", "notes.txt")
-    # my_blob = Blob(invocation.repo)
-    # file_hash = my_blob.serialise(file_path, write_to_file=True)
-    # print(file_hash)
-    # file_contents = my_blob.get_content(file_hash)
-    # print(file_contents)
     
 
 def hello(invocation):

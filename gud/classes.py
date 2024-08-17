@@ -283,18 +283,21 @@ class Tree(GudObject):
     As trees point to subdirectory trees, when creating a tree object,
     you should start from the DEEPEST node and work your way up
     """
+    def __init__(self, repo):
+        super().__init__(repo)
+        self.index = self.repo.parse_index()
+
     def serialise(self):
         """
         - read the current index and create and save a tree object from it
         - creating the tree involves grouping the children of each directory
         """
-        index = self.repo.parse_index()
-        all_path_parts = [path.split(os.sep) for path in index.keys()]
+        all_path_parts = [path.split(os.sep) for path in self.index.keys()]
         # contains only file paths, not extra data etc
         path_tree = self._build_path_tree(all_path_parts)
+        # print(path_tree)
         # TODO - use this path_tree structure to create the necessary files in .gud/objects
         
-
 
     def get_content(self, tree_hash) -> bytes:
         """
@@ -303,26 +306,52 @@ class Tree(GudObject):
         file_content = super().deserialise(tree_hash, expected_type="tree")
         return file_content
     
-    def _insert_path_into_tree(self, tree, path_parts):
-        if len(path_parts) == 1: # this is a file
-            file_name = path_parts[0]
-            tree[file_name] = None # None represents a file
+    def _insert_path_into_tree(self, tree, prefix_parts, suffix_parts):
+        """
+        eg for the path /home/me/project/file.txt
+        if we have navigated to tree["home"]["me"],
+        - prefix_parts = ["home", "me"]
+        - suffix_parts = ["project", "file.txt"]
+        ie prefix_parts represents the file path *up to* this current directory
+        suffix_parts represents the rest of the full file path
+        -- prefix_parts is "remembered" so the full path can be reconstructed to
+        read from the index (using index[file_path]) to get the file mode and hash,
+        which will both be stored in the tree in a tuple (mode, hash)    
+        """
+        if len(suffix_parts) == 1: # this is a file
+            file_name = suffix_parts[0]
+            all_parts = [x for x in prefix_parts] + suffix_parts
+            full_rel_file_path = os.path.join(*all_parts)
+            blob_info_dict = self.index[full_rel_file_path] # this should exist
+            blob_info = [blob_info_dict["mode"], blob_info_dict["hash"]]
+            tree[file_name] = blob_info
             return
-        dir = path_parts[0]
-        if dir not in tree:
-            tree[dir] = {} # dict represents a directory
-        self._insert_path_into_tree(tree[dir], path_parts=path_parts[1:])
+        # update the path parts
+        prefix_parts.append(suffix_parts[0])
+        suffix_parts = suffix_parts[1:]
+        child_dir = prefix_parts[-1]
+        if child_dir not in tree:
+            tree[child_dir] = {} # dict represents a directory
+        self._insert_path_into_tree(
+            tree=tree[child_dir],
+            prefix_parts=prefix_parts,
+            suffix_parts=suffix_parts
+        )
 
     def _build_path_tree(self, all_path_parts: list[list]) -> dict:
         """
         each dir is represented by a dictionary
         a dir can contain:
             - other dirs (which are dicts)
-            - files (represented by None)
+            - files (represented by [mode, hash])
         """
         tree = {}
         for path_parts in all_path_parts:
-            self._insert_path_into_tree(tree, path_parts)
+            self._insert_path_into_tree(
+                tree=tree,
+                prefix_parts=[],
+                suffix_parts=path_parts
+            )
         return tree
 
 class Commit(GudObject):
