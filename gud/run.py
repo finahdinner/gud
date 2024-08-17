@@ -40,7 +40,7 @@ file_paths = stage_subparser.add_argument("file_paths", nargs="*", action=PathVa
 
 commit_subparser = subparsers.add_parser('commit', help="Commit staged files to the repository's history")
 
-# status_subparser = subparsers.add_parser('status', help="View all staged and unstaged files")
+status_subparser = subparsers.add_parser('status', help="View all staged and unstaged files")
 
 # commit_subparser = subparsers.add_parser('config', help="Commit staged files to the repository's history")
 

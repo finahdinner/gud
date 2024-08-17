@@ -285,13 +285,12 @@ class Tree(GudObject):
         self.index = self.repo.parse_index()
         self.tree_hash = None
 
-    def serialise(self, return_hash=False) -> str:
+    def serialise(self) -> str:
         """
         - read the current index and create and save a path_tree object from it
         - using the tree, and the hashes stored in it, generate and save tree objects
         """
-        all_path_parts = [path.split(os.sep) for path in self.index.keys()]
-        path_tree = self._build_path_tree(all_path_parts) # file paths and blob hashes
+        path_tree = self._build_path_tree()
         self.tree_hash = self._create_tree_object(path_tree) # creates all the tree objects
         return self.tree_hash
         
@@ -334,13 +333,14 @@ class Tree(GudObject):
             suffix_parts=suffix_parts
         )
 
-    def _build_path_tree(self, all_path_parts: list[list]) -> dict:
+    def _build_path_tree(self) -> dict:
         """
         each dir is represented by a dictionary
         a dir can contain:
             - other dirs (which are dicts)
             - files (represented by [mode, hash])
         """
+        all_path_parts = [path.split(os.sep) for path in self.index.keys()]
         tree = {}
         for path_parts in all_path_parts:
             self._insert_path_into_tree(

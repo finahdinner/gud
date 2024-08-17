@@ -146,7 +146,7 @@ def config(invocation):
             print(f.read())
 
 
-def ignoring(invocation) -> None:
+def ignoring(invocation) -> set:
     """
     Show all files in this repository that Gud is set to ignore
     Find all .gudignore files, and print them out in stdout
@@ -160,6 +160,7 @@ def ignoring(invocation) -> None:
         print(f"Gud is ignoring the following files/folders in this repository ({invocation.repo.path}):\n")
         for file_path in sorted(all_ignored_file_paths):
             print(file_path)
+    return all_ignored_file_paths # return value for if another command calls this
 
 
 def stage(invocation):
@@ -233,11 +234,14 @@ def commit(invocation):
     # create the tree object(s), using the current index
     tree = Tree(invocation.repo)
     tree_hash = tree.serialise()
+    print(f"{tree_hash=}")
 
+    #
     commit_message = questionary.text(
         "What changes does this commit represent?",
         validate=TextValidatorQuestionaryNotEmpty()
     ).ask()
+    print(f"{commit_message=}")   
 
     commit = Commit(
         repo=invocation.repo,
@@ -245,45 +249,71 @@ def commit(invocation):
         commit_message=commit_message.strip(),
         timestamp=invocation.timestamp
     )
-    # create the commit object
     commit_hash = commit.serialise()
+    print(f"{commit_hash=}")
 
     # update the reference to head
     heads_path = os.path.join(invocation.repo.path, "heads", invocation.repo.branch)
     with open(heads_path, "w", encoding="utf-8") as f:
         f.write(commit_hash)
+
+    # FOR TESTING
+    commit_contents = commit.get_content(commit_hash).decode()
+    print(commit_contents)
     
 
 def status(invocation):
-    """
-    - hash all files in the working dir (except "ignored" ones) and compare to the current index (.gud/index)
-    (which represents the latest "tree"), and match each file to a file in the index
-    - if a file is in the working dir but not the index, label as "untracked"
-    - if a file is in the working dir AND index, but they do not match hashes/permissons, label as "changed"
-    - if a file is in the working dir AND index, and is indentical, do not list/label it
-    - additionally, 
-    """
-    # parse the index to get the latest virtual "tree"
+    # build a path_tree
+    tree = Tree(invocation.repo)
+    path_tree = tree._build_path_tree()
+    print(path_tree)
+
+    # find all ignored files
+    ignored_paths = ignoring(invocation)
+    print(ignored_paths)
+
+    # get all files in the working directory
     repo_root = invocation.repo.root
-    indexed_files = invocation.repo.parse_index()
-
-    # TODO - finish all these below
-    changed_files = {}
-    untracked_files = {}
-
-    all_ignored_file_paths = get_all_ignored_files(repo_root)
+    print("Checking all working dir files...")
     for root, subdirs, files in os.walk(repo_root):
-        for file_path in files:
-            full_path = os.path.join(root, file_path)
-            # check if the file is ignored
-            if full_path in all_ignored_file_paths:
+        root_formatted = format_path_for_gudignore(root)
+        # stop traversing any directory that is listed in gudignore
+        if root_formatted in ignored_paths:
+            print(f"IGNORING: {root_formatted}")
+            subdirs[:] = []
+            continue
+        for file in files:
+            full_path = os.path.join(root, file)
+            full_path_formatted = format_path_for_gudignore(full_path)
+            # if any of the ignored paths is a prefix to the current path, ignore the current path
+            if any(full_path_formatted.startswith(ignored_path) for ignored_path in ignored_paths):
+                print(f"IGORNING: {full_path_formatted}")
                 continue
-            # check if the file is in the index
-            rel_path = os.path.relpath(full_path, repo_root) # path relative to root of the repo
-            indexed_file = indexed_files(rel_path, None)
-            if not indexed_file:
-                # TODO - implement
-                ...
-            else:
-                # check file permissions and hash the file, and see if either of those have changed
-                ...
+            print(full_path_formatted)
+            # TODO - traverse the path_tree for any file that isn't ignored
+
+
+    # # parse the index to get the latest virtual "tree"
+    # repo_root = invocation.repo.root
+    # indexed_files = invocation.repo.parse_index()
+
+    # # TODO - finish all these below
+    # changed_files = {}
+    # untracked_files = {}
+
+    # all_ignored_file_paths = get_all_ignored_files(repo_root)
+    # for root, subdirs, files in os.walk(repo_root):
+    #     for file_path in files:
+    #         full_path = os.path.join(root, file_path)
+    #         # check if the file is ignored
+    #         if full_path in all_ignored_file_paths:
+    #             continue
+    #         # check if the file is in the index
+    #         rel_path = os.path.relpath(full_path, repo_root) # path relative to root of the repo
+    #         indexed_file = indexed_files(rel_path, None)
+    #         if not indexed_file:
+    #             # TODO - implement
+    #             ...
+    #         else:
+    #             # check file permissions and hash the file, and see if either of those have changed
+    #             ...

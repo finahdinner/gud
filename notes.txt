@@ -89,12 +89,10 @@ what is returned when you do `os.stat(file_path).st_mode`)
 
 
 IMPORTANT TODO (priority HIGH to LOW):
-    - when building the directory tree (nested dicts etc), instead of storing None for the files,
-    store their important info (mode, hash) in a list. so that dict = directory, list = file/blob
     - when gud status is called, it should first and foremost generate a directory tree (with the
     structure above), and then determine the set of all files that are ignored, then it should
-    go through every file in the working dir, hash it, and look it up in the directory tree (if the file is
-    ignored, it should skip this part)
+    go through every file in the working dir, hash it (WITHOUT WRITING TO FILE),
+    and look it up in the directory tree (if the file is ignored, it should skip this part)
         - if the file path doesn't exist in the directory tree, the file should be labelled as "untracked"
         - if the file path DOES exist in the directory tree, and the hash is DIFFERENT, then it should appear
         as "changed"
@@ -116,3 +114,8 @@ EDGE CASES:
         - but as soon as they want to switch branch (eg back to master),
         prevent them, and issue a warning that they should create a new branch before doing so
         - after they make a new branch, let them switch branches
+
+
+DONE:
+    - when building the directory tree (nested dicts etc), instead of storing None for the files,
+    store their important info (mode, hash) in a list. so that dict = directory, list = file/blob
