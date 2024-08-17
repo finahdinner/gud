@@ -269,8 +269,8 @@ def commit(invocation):
     with open(heads_path, "w", encoding="utf-8") as f:
         f.write(commit_hash)
 
-    commit_contents = commit.get_content(commit_hash).decode()
     # FOR TESTING
+    # commit_contents = commit.get_content(commit_hash).decode()
     # print(commit_contents)
     # for line in commit_contents.split("\n"):
     #     try:
@@ -285,7 +285,8 @@ def commit(invocation):
 def status(invocation):
     # build a path_tree
     tree = Tree(invocation.repo)
-    path_tree = tree._build_path_tree()
+    all_path_parts = [path.split(os.sep) for path in tree.index.keys()]
+    path_tree = tree._build_path_tree(all_path_parts)
 
     # find all ignored files
     ignored_paths = ignoring(invocation, for_printing_to_user=False)
@@ -376,3 +377,29 @@ def status(invocation):
 
     # TODO - read the latest commit and create an "index" by recursively inspecting each tree and collating
     # all the blob files (including their modes, hashes and file paths) from each
+    head_path = os.path.join(invocation.repo.path, "heads", invocation.repo.branch)
+    with open(head_path, "r", encoding="utf-8") as f:
+        head_commit_hash = f.read().strip()
+    if not head_commit_hash: # no commits are recorded
+        head_index = {}
+    else:
+        commit = Commit(invocation.repo)
+        head_commit_contents = commit.get_content(head_commit_hash).decode()
+        for line in head_commit_contents.split("\n"):
+            try:
+                type, value = line.split("\t")
+            except ValueError:
+                continue
+            else:
+                if type == "tree":
+                    tree_hash = value
+        if not tree_hash:
+            raise Exception(f"Could not find tree_hash from commit {head_commit_hash}")
+        print(tree_hash)
+
+
+
+
+    all_path_parts = [path.split(os.sep) for path in head_index.keys()]
+    head_path_tree = tree._build_path_tree(all_path_parts)
+    print(f"{head_path_tree=}")

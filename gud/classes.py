@@ -218,6 +218,8 @@ class GudObject:
         Serialised/stored data -> usable/readable data
         """
         full_file_path = self.get_full_file_path_from_hash(obj_hash)
+        print(f"{obj_hash=}")
+        print(f"{full_file_path=}")
         with open(full_file_path, "rb") as f:
             full_content = f.read()
         try:
@@ -290,7 +292,8 @@ class Tree(GudObject):
         - read the current index and create and save a path_tree object from it
         - using the tree, and the hashes stored in it, generate and save tree objects
         """
-        path_tree = self._build_path_tree()
+        all_path_parts = [path.split(os.sep) for path in self.index.keys()]
+        path_tree = self._build_path_tree(all_path_parts)
         self.tree_hash = self._create_tree_object(path_tree) # creates all the tree objects
         return self.tree_hash
         
@@ -333,14 +336,13 @@ class Tree(GudObject):
             suffix_parts=suffix_parts
         )
 
-    def _build_path_tree(self) -> dict:
+    def _build_path_tree(self, all_path_parts: list[list]) -> dict:
         """
         each dir is represented by a dictionary
         a dir can contain:
             - other dirs (which are dicts)
             - files (represented by [mode, hash])
         """
-        all_path_parts = [path.split(os.sep) for path in self.index.keys()]
         tree = {}
         for path_parts in all_path_parts:
             self._insert_path_into_tree(
@@ -373,7 +375,7 @@ class Tree(GudObject):
         return tree_hash
 
 class Commit(GudObject):
-    def __init__(self, repo, tree_hash, commit_message, timestamp):
+    def __init__(self, repo, tree_hash=None, commit_message=None, timestamp=None):
         super().__init__(repo)
         self.tree_hash = tree_hash
         self.commit_message = commit_message
