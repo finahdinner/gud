@@ -216,6 +216,8 @@ def stage(invocation):
                 rel_file_path = os.path.join(rel_path, file)
                 rel_paths_specified.append(rel_file_path)
 
+    index = invocation.repo.parse_index()
+
     if action == "add":
         # this should only contain files now, not directories
         abs_paths_specified = [os.path.join(invocation.repo.root, path) for path in rel_paths_specified]
@@ -229,7 +231,6 @@ def stage(invocation):
                     if ignored_path == abs_path:
                         sys.exit(f"{abs_path} is being ignored by Gud.\nPlease remove it from your `.gudignore` file(s) if you wish to stage it.")
 
-        index = invocation.repo.parse_index()
         for rel_path in rel_paths_specified:
             abs_path = os.path.join(invocation.repo.root, rel_path)
             blob = Blob(repo=invocation.repo)
@@ -240,10 +241,8 @@ def stage(invocation):
                 "mode": file_mode,
                 "hash": file_hash
             }
-        invocation.repo.write_to_index(index) 
 
     elif action == "remove":
-        curr_index = invocation.repo.parse_index()
         commit = Commit(invocation.repo)
         tree = Tree(invocation.repo)
         head_index = tree.get_head_index(commit_obj=commit)
@@ -251,11 +250,11 @@ def stage(invocation):
         for rel_path in rel_paths_specified:
             previous_version_of_file = head_index.get(rel_path, None)
             if previous_version_of_file is None: # file didn't exist at the last commit
-                del curr_index[rel_path]
+                del index[rel_path]
             else:
-                curr_index[rel_path] = previous_version_of_file
-        invocation.repo.write_to_index(curr_index)
+                index[rel_path] = previous_version_of_file
     
+    invocation.repo.write_to_index(index)
     print(f"{len(rel_paths_specified)} files {connective} the staging area.\nUse `gud status` for more details.\nUse `gud commit` when ready to commit.")
 
 
@@ -305,25 +304,9 @@ def status(invocation, print_output=True) -> dict[str, dict]:
     staged_index = tree.index
 
     """ Determine STAGED file differences (where index =/ last commit) """
-    head_commit_hash = invocation.repo.head
-    if not head_commit_hash: # no commits are recorded
-        head_index = {}
-    else:
-        commit = Commit(invocation.repo)
-        head_commit_contents = commit.get_content(head_commit_hash).decode()
-        for line in head_commit_contents.split("\n"):
-            try:
-                type, value = line.split("\t")
-            except ValueError:
-                continue
-            else:
-                if type == "tree":
-                    root_tree_hash = value
-        if not root_tree_hash:
-            raise Exception(f"Could not find tree_hash from commit {head_commit_hash}")
-        # generate an "head_index" by recursively inspecting all the tree objects
-        tree = Tree(invocation.repo)
-        head_index = tree._read_tree_object(root_tree_hash, curr_path="")
+    commit = Commit(invocation.repo)
+    tree = Tree(invocation.repo)
+    head_index = tree.get_head_index(commit_obj=commit)
 
     # compare head_index to staged_index
     files_in_head_index = set(head_index)
