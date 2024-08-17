@@ -20,6 +20,7 @@ from .classes import (
     TextValidatorQuestionaryNotEmpty
 )
 import os
+import sys
 from copy import deepcopy
 
 
@@ -232,7 +233,8 @@ def stage(invocation):
 
 
 def commit(invocation):
-    # TODO - initially run gud status to confirm that there ARE changes to be committed
+    # TODO - initially check to see if any files are staged -- need to compare to HEAD commit
+    # if no files are staged, prevent the commit from occurring
 
     # create the tree object(s), using the current index
     tree = Tree(invocation.repo)
