@@ -246,13 +246,11 @@ def commit(invocation):
     # create the tree object(s), using the current index
     tree = Tree(invocation.repo)
     tree_hash = tree.serialise()
-    print(f"{tree_hash=}")
 
     commit_message = questionary.text(
         "What changes does this commit represent?",
         validate=TextValidatorQuestionaryNotEmpty()
     ).ask()
-    print(f"{commit_message=}")   
 
     commit = Commit(
         repo=invocation.repo,
@@ -261,106 +259,17 @@ def commit(invocation):
         timestamp=invocation.timestamp
     )
     commit_hash = commit.serialise()
-    print(f"{commit_hash=}")
 
     # update the reference to head
     heads_path = os.path.join(invocation.repo.path, "heads", invocation.repo.branch)
     with open(heads_path, "w", encoding="utf-8") as f:
         f.write(commit_hash)
+
+    print(f"Successfully committed on branch {invocation.repo.branch}.\nUse `gud log` to view commit history.")
     
 
-def status(invocation):
-    # build a path_tree
-    tree = Tree(invocation.repo)
-    all_path_parts = [path.split(os.sep) for path in tree.index.keys()]
-    path_tree = tree._build_path_tree(all_path_parts)
-
-    # find all ignored files
-    ignored_paths = ignoring(invocation, for_printing_to_user=False)
-
-    untracked_files = set()
-    tracked_unchanged_files = set()
-    tracked_changed_files = set()
-
-    # get all files in the working directory
-    repo_root = invocation.repo.root
-    for root, subdirs, files in os.walk(repo_root):
-        root_formatted = format_path_for_gudignore(root)
-        # stop traversing any directory that is listed in gudignore
-        if root_formatted in ignored_paths:
-            subdirs[:] = [] # prevents traversal of ignored directories
-            continue
-        for file in files:
-            full_path = os.path.join(root, file)
-            full_path_formatted = format_path_for_gudignore(full_path)
-            # if any of the ignored paths is a prefix to the current path, ignore the current path
-            if any(full_path_formatted.startswith(ignored_path) for ignored_path in ignored_paths):
-                continue
-            # TODO - traverse the path_tree for any file that isn't ignored
-            rel_path = os.path.relpath(full_path, invocation.repo.root)
-            path_parts = rel_path.split("/")
-
-            subtree = deepcopy(path_tree)
-            prefix_parts = []
-            suffix_parts = path_parts[:]
-            while suffix_parts:
-                prefix_parts.append(suffix_parts[0])
-                suffix_parts = suffix_parts[1:]
-                next_lookup: str = prefix_parts[-1]
-                subtree = subtree.get(next_lookup, None)
-                file_path_so_far = os.path.join(*prefix_parts)
-                if subtree is None: # untracked file/dir
-                    # using untracked path like this ensures that it only lists the
-                    # shallowest untracked directory, rather than listing the entire contents
-                    # as untracked
-                    if os.path.isdir(file_path_so_far):
-                        file_path_so_far += os.sep # trailing slash if dir - is clearer in the output
-                    untracked_files.add(file_path_so_far)
-                    break
-                elif isinstance(subtree, list): # tracked FILE
-                    old_mode = subtree[0]
-                    old_hash = subtree[1]
-                    blob = Blob(invocation.repo)
-                    new_mode = get_file_mode(file_path_so_far)
-                    new_hash = blob.serialise(file_path_so_far, write_to_file=False)
-                    if old_mode == new_mode and old_hash == new_hash:
-                        tracked_unchanged_files.add(file_path_so_far)
-                    else:
-                        tracked_changed_files.add(file_path_so_far)
-                    break
-                # else, it's a tracked subtree and the loop continues
-
-    untracked_files = sorted(untracked_files)
-    tracked_changed_files = sorted(tracked_changed_files)
-
-    if not any([untracked_files, tracked_changed_files]):
-        print("nothing to commit, working tree clean")
-    else:
-        if tracked_changed_files:
-            print("Changes not staged for commit:\n  Use `gud add` to add a file to the staging area")
-            for path in tracked_changed_files:
-                print("\t", path)
-            print()
-        if untracked_files:
-            print("Untracked files:\n  Use `gud add` to add a file to the staging area")
-            for path in untracked_files:
-                print("\t", path)
-            print()
-
+def status(invocation) -> dict[str, dict]:
     """
-    TODO - amend Gud status so that:
-    - untracked files remain the same as the current implementation
-    - instead of splitting into tracked_changed and tracked_unchanged at this point,
-    just classify tracked files as tracked (with no distinction between changed and unchanged)
-    - now, parse the latest commit (HEAD), recursively going through all the trees defined inside,
-    and build an index using this commit
-    - compare the index from the HEAD commit, to the live index at .gud/index
-    - compare each file, one-by-one:
-        - if the hash is the same, label as "tracked_unchanged"
-        - if the hash is different, label as "tracked_changed" (or "tracked_modified")
-        - if a file exists in the live index but not the commit's index, list as "tracked_added" (or similar)
-        - if the file exists in the commit index but not the live index, list as "tracked_deleted" (or similar)
-
     6 categories for files:
 
     staged_modified
@@ -370,11 +279,11 @@ def status(invocation):
     unstaged_modified
     unstaged_deleted
     unstaged_added
-
     """
+    tree = Tree(invocation.repo)
+    staged_index = tree.index
 
-    # TODO - read the latest commit and create an "index" by recursively inspecting each tree and collating
-    # all the blob files (including their modes, hashes and file paths) from each
+    """ Determine STAGED file differences (where index =/ last commit) """
     head_path = os.path.join(invocation.repo.path, "heads", invocation.repo.branch)
     with open(head_path, "r", encoding="utf-8") as f:
         head_commit_hash = f.read().strip()
@@ -398,13 +307,8 @@ def status(invocation):
         head_index = tree._read_tree_object(root_tree_hash, curr_path="")
 
     # compare head_index to staged_index
-    staged_index = invocation.repo.parse_index()
-    print(f"{staged_index=}")
-    print(f"{head_index=}")
-
     files_in_head_index = set(head_index)
     files_in_staged_index = set(staged_index)
-
     _staged_existing_files = files_in_head_index & files_in_staged_index
     staged_modified_files = set()
     for file_path in _staged_existing_files:
@@ -418,19 +322,112 @@ def status(invocation):
     staged_deleted_files = files_in_head_index - files_in_staged_index
     staged_added_files = files_in_staged_index - files_in_head_index
 
-    print(f"{deleted_files=}")
-    print(f"{new_files=}")
-    print(f"{modified_files=}")
+    """ Determine UNSTAGED file differences (where working directory =/ index) """
+    # build a path_tree for the current index
+    all_path_parts = [path.split(os.sep) for path in staged_index.keys()]
+    path_tree = tree._build_path_tree(all_path_parts)
+
+    # find all ignored files
+    ignored_paths = ignoring(invocation, for_printing_to_user=False)
+
+    unstaged_added_files = set()
+    unstaged_modified_files = set()
+
+    # get all files in the working directory
+    working_dir_paths_traversed = set()
+    repo_root = invocation.repo.root
+    for root, subdirs, files in os.walk(repo_root):
+        root_formatted = format_path_for_gudignore(root)
+        # stop traversing any directory that is listed in gudignore
+        if root_formatted in ignored_paths:
+            subdirs[:] = [] # prevents traversal of ignored directories
+            continue
+        for file in files:
+            full_path = os.path.join(root, file)
+            full_path_formatted = format_path_for_gudignore(full_path)
+            # if any of the ignored paths is a prefix to the current path, ignore the current path
+            if any(full_path_formatted.startswith(ignored_path) for ignored_path in ignored_paths):
+                continue
+
+            rel_path = os.path.relpath(full_path, invocation.repo.root)
+            working_dir_paths_traversed.add(rel_path)
+            path_parts = rel_path.split("/")
+
+            subtree = deepcopy(path_tree)
+            prefix_parts = []
+            suffix_parts = path_parts[:]
+            while suffix_parts:
+                prefix_parts.append(suffix_parts[0])
+                suffix_parts = suffix_parts[1:]
+                next_lookup: str = prefix_parts[-1]
+                subtree = subtree.get(next_lookup, None)
+                file_path_so_far = os.path.join(*prefix_parts)
+                if subtree is None: # untracked file/dir
+                    # using untracked path like this ensures that it only lists the
+                    # shallowest untracked directory, rather than listing the entire contents
+                    # as untracked
+                    if os.path.isdir(file_path_so_far):
+                        file_path_so_far += os.sep # trailing slash if dir - is clearer in the output
+                    unstaged_added_files.add(file_path_so_far)
+                    break
+                elif isinstance(subtree, list): # tracked FILE
+                    old_mode = subtree[0]
+                    old_hash = subtree[1]
+                    blob = Blob(invocation.repo)
+                    new_mode = get_file_mode(file_path_so_far)
+                    new_hash = blob.serialise(file_path_so_far, write_to_file=False)
+                    if old_mode != new_mode or old_hash != new_hash:
+                        unstaged_modified_files.add(file_path_so_far)
+                    break
+                # else, it's a tracked subtree and the loop continues
+    
+    # checks which staged/indexed files were not traversed
+    unstaged_deleted_files = staged_index.keys() - working_dir_paths_traversed
+
+    """ Print out everything we determined from this whole function """
+    staged = {
+        "modified": sorted(staged_modified_files),
+        "added": sorted(staged_added_files),
+        "deleted": sorted(staged_deleted_files)
+    }
+
+    unstaged = {
+        "modified": sorted(unstaged_modified_files),
+        "added": sorted(unstaged_added_files),
+        "deleted": sorted(unstaged_deleted_files)
+    }
+
+    # if both staged and unstaged are empty
+    if not (any(staged.values()) or any(unstaged.values())):
+        print("nothing to commit, working tree clean")
+
+    else:
+
+        if any(staged.values()):
+            print("Changes to be committed:\n  Use `gud stage remove <file>` to remove a file from the staging area")
+            for file_path in staged["modified"]:
+                print(f"\tmodified: {file_path}")
+            for file_path in staged["deleted"]:
+                print(f"\tdeleted: {file_path}")
+            for file_path in staged["added"]:
+                print(f"\tnew file: {file_path}")
+            print()
+
+        if unstaged["modified"] or unstaged["deleted"]:
+            print("Changes not staged for commit:\n  Use `gud stage add <file>` to update a file in the staging area")
+            for file_path in unstaged["modified"]:
+                print(f"\tmodified: {file_path}")
+            for file_path in unstaged["deleted"]:
+                print(f"\tdeleted: {file_path}")
+            print()
+
+        if unstaged["added"]:
+            print("Untracked files:\n  Use `gud stage add <file>` to include a file in the staging area")
+            for file_path in unstaged["added"]:
+                print(f"\tnew file: {file_path}")
+            print()
 
     return {
-        "staged": {
-            "modified": staged_modified_files,
-            "added": staged_added_files,
-            "deleted": staged_deleted_files,
-        },
-        "unstaged": {
-            "modified": ...,
-            "added": ...,
-            "deleted": ...,
-        }
+        "staged": staged,
+        "unstaged": unstaged
     }
