@@ -213,11 +213,11 @@ class GudObject:
                 f.write(full_content)
         return hash
 
-    def deserialise_object(self, blob_hash: str, expected_type=None) -> bytes:
+    def deserialise_object(self, obj_hash: str, expected_type=None) -> bytes:
         """
         Serialised/stored data -> usable/readable data
         """
-        full_file_path = self.get_full_file_path_from_hash(blob_hash)
+        full_file_path = self.get_full_file_path_from_hash(obj_hash)
         with open(full_file_path, "rb") as f:
             full_content = f.read()
         try:
@@ -285,7 +285,7 @@ class Tree(GudObject):
         self.index = self.repo.parse_index()
         self.tree_hash = None
 
-    def serialise(self):
+    def serialise(self, return_hash=False) -> str:
         """
         - read the current index and create and save a path_tree object from it
         - using the tree, and the hashes stored in it, generate and save tree objects
@@ -293,7 +293,7 @@ class Tree(GudObject):
         all_path_parts = [path.split(os.sep) for path in self.index.keys()]
         path_tree = self._build_path_tree(all_path_parts) # file paths and blob hashes
         self.tree_hash = self._create_tree_object(path_tree) # creates all the tree objects
-        print(self.tree_hash)
+        return self.tree_hash
         
     def get_content(self, tree_hash) -> bytes:
         """
@@ -388,13 +388,13 @@ class Commit(GudObject):
         message <message>
         """
         commit_file_lines = []
-        commit_file_lines.append(f"tree\t{self.tree_hash}")
+        commit_file_lines.append(f"tree\t{self.tree_hash}\n")
         curr_head = self.repo.head
         if curr_head:
-            commit_file_lines.append(f"parent\t{curr_head}")
+            commit_file_lines.append(f"parent\t{curr_head}\n")
         committer_name = self.repo.config["user"]["name"]
         committer_email = self.repo.config["user"]["email"]
-        commit_file_lines.append(f"committer\t{committer_name} <{committer_email}> ({self.timestamp})")
+        commit_file_lines.append(f"committer\t{committer_name} <{committer_email}> ({self.timestamp})\n")
         commit_file_lines.append("\n")
         commit_file_lines.append(self.commit_message)
 

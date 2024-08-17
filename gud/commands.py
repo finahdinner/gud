@@ -234,12 +234,10 @@ def commit(invocation):
     tree = Tree(invocation.repo)
     tree_hash = tree.serialise()
 
-    #
     commit_message = questionary.text(
         "What changes does this commit represent?",
         validate=TextValidatorQuestionaryNotEmpty()
     ).ask()
-    print(f"{commit_message=}")   
 
     commit = Commit(
         repo=invocation.repo,
@@ -247,8 +245,13 @@ def commit(invocation):
         commit_message=commit_message.strip(),
         timestamp=invocation.timestamp
     )
+    # create the commit object
     commit_hash = commit.serialise()
-    print(f"{commit_hash=}")
+
+    # update the reference to head
+    heads_path = os.path.join(invocation.repo.path, "heads", invocation.repo.branch)
+    with open(heads_path, "w", encoding="utf-8") as f:
+        f.write(commit_hash)
     
 
 def status(invocation):
