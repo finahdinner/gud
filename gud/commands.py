@@ -255,12 +255,14 @@ def stage(invocation):
                 index[rel_path] = previous_version_of_file
     
     invocation.repo.write_to_index(index)
-    print(f"{len(rel_paths_specified)} files {connective} the staging area.\nUse `gud status` for more details.\nUse `gud commit` when ready to commit.")
+    num_files_staged = len(rel_paths_specified)
+    print(f"{num_files_staged} file{'s' if num_files_staged > 1 else ''} {connective} the staging area.\nUse `gud status` for more details.\nUse `gud commit` when ready to commit.")
 
 
 def commit(invocation):
     file_changes = status(invocation, print_output=False)
-    if not any(file_changes["staged"].values()):
+    num_files_staged: int = file_changes["num_staged"]
+    if num_files_staged == 0:
         sys.exit("You cannot commit, as there are no changes in the staging area.")
 
     # create the tree object(s), using the current index
@@ -285,10 +287,10 @@ def commit(invocation):
     with open(heads_path, "w", encoding="utf-8") as f:
         f.write(commit_hash)
 
-    print(f"Successfully committed on branch {invocation.repo.branch}.\nUse `gud log` to view commit history.")
+    print(f"Successfully committed {num_files_staged} file{'s' if num_files_staged > 1 else ''} on branch {invocation.repo.branch}.\nUse `gud log` to view commit history.")
     
 
-def status(invocation, print_output=True) -> dict[str, dict]:
+def status(invocation, print_output=True) -> dict:
     """
     6 categories for files:
 
@@ -404,6 +406,8 @@ def status(invocation, print_output=True) -> dict[str, dict]:
         "added": sorted(staged_added_files),
         "deleted": sorted(staged_deleted_files)
     }
+    
+    num_staged = sum(len(lst) for lst in staged.values())
 
     unstaged = {
         "modified": sorted(unstaged_modified_files),
@@ -444,6 +448,7 @@ def status(invocation, print_output=True) -> dict[str, dict]:
                 print()
 
     return {
+        "num_staged": num_staged,
         "staged": staged,
         "unstaged": unstaged
     }
