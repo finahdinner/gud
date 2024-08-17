@@ -341,6 +341,7 @@ class Tree(GudObject):
             - files (represented by [mode, hash])
         """
         all_path_parts = [path.split(os.sep) for path in self.index.keys()]
+        print(f"{all_path_parts=}")
         tree = {}
         for path_parts in all_path_parts:
             self._insert_path_into_tree(

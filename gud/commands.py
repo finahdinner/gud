@@ -146,7 +146,7 @@ def config(invocation):
             print(f.read())
 
 
-def ignoring(invocation) -> set:
+def ignoring(invocation, include_gud_folder=False) -> set:
     """
     Show all files in this repository that Gud is set to ignore
     Find all .gudignore files, and print them out in stdout
@@ -154,6 +154,8 @@ def ignoring(invocation) -> set:
     """
     repo_root = invocation.repo.root
     all_ignored_file_paths = get_all_ignored_files(repo_root)
+    if include_gud_folder:
+        all_ignored_file_paths.add(".gud")
     if not all_ignored_file_paths:
         print(f"No files/folders are being ignored in this repository ({invocation.repo.path})")
     else:
@@ -269,8 +271,12 @@ def status(invocation):
     print(path_tree)
 
     # find all ignored files
-    ignored_paths = ignoring(invocation)
+    ignored_paths = ignoring(invocation, include_gud_folder=True)
     print(ignored_paths)
+
+    untracked_files = set()
+    tracked_unchanged_files = set()
+    tracked_changed_files = set()
 
     # get all files in the working directory
     repo_root = invocation.repo.root
@@ -280,7 +286,7 @@ def status(invocation):
         # stop traversing any directory that is listed in gudignore
         if root_formatted in ignored_paths:
             print(f"IGNORING: {root_formatted}")
-            subdirs[:] = []
+            subdirs[:] = [] # prevents traversal of 
             continue
         for file in files:
             full_path = os.path.join(root, file)
@@ -289,8 +295,27 @@ def status(invocation):
             if any(full_path_formatted.startswith(ignored_path) for ignored_path in ignored_paths):
                 print(f"IGORNING: {full_path_formatted}")
                 continue
-            print(full_path_formatted)
             # TODO - traverse the path_tree for any file that isn't ignored
+            rel_path = os.path.relpath(full_path, invocation.repo.root)
+            path_parts = rel_path.split("/")
+            print(path_parts)
+
+            subdir = path_tree
+            while True:
+                if len(path_parts) == 1: # reached the end
+                    result = subdir[path_parts[0]]
+
+                
+                next_part = path_parts.pop(0)
+                subdir = path_tree.get(next_part, None)
+                if not subdir: # untracked file
+                    untracked_files.add(subdir)
+                    break
+                print(subdir)
+            # at this point, you have reached a specific file that IS being tracked
+            tracked_files.add([])
+            # print(path_parts)
+
 
 
     # # parse the index to get the latest virtual "tree"
