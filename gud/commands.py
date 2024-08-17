@@ -8,7 +8,7 @@ from .helpers import (
     is_valid_email,
     open_relevant_editor,
     get_default_file_from_package_installation,
-    get_all_ignored_files,
+    get_all_ignored_paths,
     format_path_for_gudignore,
     get_file_mode
 )
@@ -20,6 +20,7 @@ from .classes import (
     TextValidatorQuestionaryNotEmpty
 )
 import os
+from copy import deepcopy
 
 
 def test(invocation):
@@ -153,9 +154,9 @@ def ignoring(invocation, include_gud_folder=False) -> set:
     Make sure to label each file above its contents, and make it clear/well-formatted
     """
     repo_root = invocation.repo.root
-    all_ignored_file_paths = get_all_ignored_files(repo_root)
+    all_ignored_file_paths = get_all_ignored_paths(repo_root)
     if include_gud_folder:
-        all_ignored_file_paths.add(".gud")
+        all_ignored_file_paths.add(format_path_for_gudignore(invocation.repo.path))
     if not all_ignored_file_paths:
         print(f"No files/folders are being ignored in this repository ({invocation.repo.path})")
     else:
@@ -285,7 +286,7 @@ def status(invocation):
         root_formatted = format_path_for_gudignore(root)
         # stop traversing any directory that is listed in gudignore
         if root_formatted in ignored_paths:
-            print(f"IGNORING: {root_formatted}")
+            # print(f"IGNORING: {root_formatted}")
             subdirs[:] = [] # prevents traversal of 
             continue
         for file in files:
@@ -298,22 +299,34 @@ def status(invocation):
             # TODO - traverse the path_tree for any file that isn't ignored
             rel_path = os.path.relpath(full_path, invocation.repo.root)
             path_parts = rel_path.split("/")
-            print(path_parts)
+            # print(path_parts)
 
-            subdir = path_tree
-            while True:
-                if len(path_parts) == 1: # reached the end
-                    result = subdir[path_parts[0]]
+            tracked = True
+            subtree = deepcopy(path_tree)
+            while path_parts:
+                next_lookup: str = path_parts.pop(0)
+                subtree = subtree.get(next_lookup, None)
+                if subtree is None: # untracked file
+                    untracked_files.add(rel_path)
+                    tracked = False
+                    break
+                elif isinstance(subtree, list): # tracked FILE
+                    # TODO - compare the file's stored has to a new, computed hash for the file
+                    # print(subdir)
+                    break
+                # else, it's a tracked subtree and the loop continues
+            if tracked:
+                print(f"{rel_path} is tracked!")
 
                 
-                next_part = path_parts.pop(0)
-                subdir = path_tree.get(next_part, None)
-                if not subdir: # untracked file
-                    untracked_files.add(subdir)
-                    break
-                print(subdir)
+                # next_part = path_parts.pop(0)
+                # subdir = path_tree.get(next_part, None)
+                # if not subdir: # untracked file
+                #     untracked_files.add(subdir)
+                #     break
+                # print(subdir)
             # at this point, you have reached a specific file that IS being tracked
-            tracked_files.add([])
+            # tracked_files.add([])
             # print(path_parts)
 
 
@@ -326,7 +339,7 @@ def status(invocation):
     # changed_files = {}
     # untracked_files = {}
 
-    # all_ignored_file_paths = get_all_ignored_files(repo_root)
+    # all_ignored_file_paths = get_all_ignored_paths(repo_root)
     # for root, subdirs, files in os.walk(repo_root):
     #     for file_path in files:
     #         full_path = os.path.join(root, file_path)

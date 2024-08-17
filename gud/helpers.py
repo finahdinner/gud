@@ -78,7 +78,7 @@ def parse_gudignore_in_dir(parent_dir) -> set:
     return ignored_file_paths
 
 
-def get_all_ignored_files(initial_dir, as_rel_path=False) -> set:
+def get_all_ignored_paths(initial_dir, as_rel_path=False) -> set:
     """
     as_rel_path determines if the paths returned are relative to the initial_dir or not
     """
