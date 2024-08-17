@@ -15,7 +15,9 @@ from .helpers import (
 from .classes import (
     Blob,
     Tree,
-    PathValidatorQuestionary
+    Commit,
+    PathValidatorQuestionary,
+    TextValidatorQuestionaryNotEmpty
 )
 import os
 
@@ -222,12 +224,32 @@ def stage(invocation):
         # the version of the file as it was at the last commit
         index = invocation.repo.parse_index()
         latest_commit = invocation.repo.head
-        
-        
-
-
         raise NotImplementedError("'Remove' has not been implemented yet.")
 
+
+def commit(invocation):
+    # TODO - initially run gud status to confirm that there ARE changes to be committed
+
+    # create the tree object(s), using the current index
+    tree = Tree(invocation.repo)
+    tree_hash = tree.serialise()
+
+    #
+    commit_message = questionary.text(
+        "What changes does this commit represent?",
+        validate=TextValidatorQuestionaryNotEmpty()
+    ).ask()
+    print(f"{commit_message=}")   
+
+    commit = Commit(
+        repo=invocation.repo,
+        tree_hash=tree_hash,
+        commit_message=commit_message.strip(),
+        timestamp=invocation.timestamp
+    )
+    commit_hash = commit.serialise()
+    print(f"{commit_hash=}")
+    
 
 def status(invocation):
     """

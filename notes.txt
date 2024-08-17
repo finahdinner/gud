@@ -109,3 +109,10 @@ IMPORTANT TODO (priority HIGH to LOW):
         - each time I test, I can copy the contents of this directory into a tmp/ folder, then run the gud testing
         - reason to do this is so that I don't mess up the actual git repository if something goes wrong
     - make the stdout outputs coloured!!
+
+EDGE CASES:
+    - if a user is checking out a previous commit, and is in a detached head state:
+        - let them make changes and make commits
+        - but as soon as they want to switch branch (eg back to master),
+        prevent them, and issue a warning that they should create a new branch before doing so
+        - after they make a new branch, let them switch branches

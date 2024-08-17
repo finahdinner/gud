@@ -8,8 +8,9 @@ from .commands import (
     init,
     config,
     ignoring,
-    status,
-    stage
+    stage,
+    commit,
+    status
 )
 
 
@@ -36,6 +37,8 @@ stage_subparser = subparsers.add_parser('stage', help="Add or remove file(s) to 
 add_or_remove = stage_subparser.add_argument('add_or_remove', nargs="?", choices=["add", "remove"], help="Add or remove from the staging area")
 # file_names is a list of zero or more files
 file_paths = stage_subparser.add_argument("file_paths", nargs="*", action=PathValidatorArgparse, help="A specified file or directory to add/remove to/from the staging area")
+
+commit_subparser = subparsers.add_parser('commit', help="Commit staged files to the repository's history")
 
 # status_subparser = subparsers.add_parser('status', help="View all staged and unstaged files")
 
@@ -65,6 +68,8 @@ def main():
             ignoring(invocation)
         case "stage":
             stage(invocation)
+        case "commit":
+            commit(invocation)
         case "status":
             status(invocation)
 

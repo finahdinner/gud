@@ -198,7 +198,22 @@ class GudObject:
         self.repo = repo
         self.objects_dir = os.path.join(repo.path, "objects")
 
-    def deserialise(self, blob_hash, expected_type=None) -> bytes:
+    def serialise_object(self, uncompressed_content: bytes, object_type: str, write_to_file=False) -> str:
+        uncompressed_size = len(uncompressed_content)
+        header = f"{object_type} {uncompressed_size}\0".encode()
+        compressed_content = zlib.compress(uncompressed_content, level=COMPRESSION_LEVEL)
+        full_content = header + compressed_content
+        hash = sha1(full_content).hexdigest()
+        if write_to_file:
+            obj_file_path = self.get_full_file_path_from_hash(hash)
+            dir_path = os.path.dirname(obj_file_path)
+            if not os.path.exists(dir_path):
+                os.mkdir(dir_path)
+            with open(obj_file_path, "wb") as f:
+                f.write(full_content)
+        return hash
+
+    def deserialise_object(self, blob_hash: str, expected_type=None) -> bytes:
         """
         Serialised/stored data -> usable/readable data
         """
@@ -237,32 +252,14 @@ class Blob(GudObject):
         # open and read bytes
         with open(og_file_path, "rb") as f:
             uncompressed_content = f.read()
-        # create the header
-        uncompressed_size = len(uncompressed_content)
-        header = f"blob {uncompressed_size}\0".encode() # as bytes
-        # compress the file
-        compressed_content = zlib.compress(uncompressed_content, level=COMPRESSION_LEVEL)
-        # full blob content
-        full_content = header + compressed_content
-        # hash
-        blob_hash = sha1(full_content).hexdigest()
-        # only if write_to_file is specified
-        if write_to_file:
-            full_file_path = self.get_full_file_path_from_hash(blob_hash)
-            # create the dir if it doesn't already exist
-            dir_path = os.path.dirname(full_file_path)
-            if not os.path.exists(dir_path):
-                os.mkdir(dir_path)
-            # write to the objects file
-            with open(full_file_path, "wb") as f:
-                f.write(full_content)
+        blob_hash = super().serialise_object(uncompressed_content, "blob", write_to_file)
         return blob_hash        
 
     def get_content(self, blob_hash) -> bytes:
         """
         Serialised/stored data -> usable/readable data
         """
-        file_content = super().deserialise(blob_hash, expected_type="blob")
+        file_content = super().deserialise_object(blob_hash, expected_type="blob")
         return file_content
 
 
@@ -286,6 +283,7 @@ class Tree(GudObject):
     def __init__(self, repo):
         super().__init__(repo)
         self.index = self.repo.parse_index()
+        self.tree_hash = None
 
     def serialise(self):
         """
@@ -294,13 +292,14 @@ class Tree(GudObject):
         """
         all_path_parts = [path.split(os.sep) for path in self.index.keys()]
         path_tree = self._build_path_tree(all_path_parts) # file paths and blob hashes
-        self._create_tree_object(path_tree) # creates all the tree objects
+        self.tree_hash = self._create_tree_object(path_tree) # creates all the tree objects
+        print(self.tree_hash)
         
     def get_content(self, tree_hash) -> bytes:
         """
         Serialised/stored data -> usable/readable data
         """
-        file_content = super().deserialise(tree_hash, expected_type="tree")
+        file_content = super().deserialise_object(tree_hash, expected_type="tree")
         return file_content
     
     def _insert_path_into_tree(self, tree, prefix_parts, suffix_parts):
@@ -371,29 +370,43 @@ class Tree(GudObject):
         print(tree_file_lines)
         # using tree_file_lines, create and hash the actual file
         uncompressed_content = b"".join((line.encode() for line in tree_file_lines))
-        uncompressed_size = len(uncompressed_content)
-        tree_header = f"tree {uncompressed_size}\0".encode()
-        compressed_content = zlib.compress(uncompressed_content, level=COMPRESSION_LEVEL)
-        full_content = tree_header + compressed_content
-        tree_hash = sha1(full_content).hexdigest()
-        tree_file_path = self.get_full_file_path_from_hash(tree_hash)
-        dir_path = os.path.dirname(tree_file_path)
-        if not os.path.exists(dir_path):
-            os.mkdir(dir_path)
-        with open(tree_file_path, "wb") as f:
-            print("writing tree to file...", f"{tree_hash=}")
-            f.write(full_content)
+        tree_hash = super().serialise_object(uncompressed_content, "tree", write_to_file=True)
         return tree_hash
 
 class Commit(GudObject):
+    def __init__(self, repo, tree_hash, commit_message, timestamp):
+        super().__init__(repo)
+        self.tree_hash = tree_hash
+        self.commit_message = commit_message
+        self.timestamp = timestamp
+
     def serialise(self) -> str:
-        ...
+        """
+        tree <hash>
+        parent <hash> (unless it's the first commit, in which case this line is empty)
+        committer <email>
+        message <message>
+        """
+        commit_file_lines = []
+        commit_file_lines.append(f"tree\t{self.tree_hash}")
+        curr_head = self.repo.head
+        if curr_head:
+            commit_file_lines.append(f"parent\t{curr_head}")
+        committer_name = self.repo.config["user"]["name"]
+        committer_email = self.repo.config["user"]["email"]
+        commit_file_lines.append(f"committer\t{committer_name} <{committer_email}> ({self.timestamp})")
+        commit_file_lines.append("\n")
+        commit_file_lines.append(self.commit_message)
+
+        uncompressed_content = b"".join((line.encode() for line in commit_file_lines))
+        commit_hash = super().serialise_object(uncompressed_content, "commit", write_to_file=True)
+        return commit_hash
 
     def get_content(self, commit_hash) -> bytes:
         """
         Serialised/stored data -> usable/readable data
         """
-        file_content = super().deserialise(commit_hash, expected_type="commit")
+        file_content = super().deserialise_object(commit_hash, expected_type="commit")
         return file_content
 
 
@@ -409,6 +422,14 @@ class PathValidatorQuestionary(Validator):
                 message="Path is not valid"
             )
         
+
+class TextValidatorQuestionaryNotEmpty(Validator):
+    def validate(self, document):
+        text = document.text.strip()
+        if not text:
+            raise ValidationError(
+                message="You cannot leave this blank"
+            )
 
 class PathValidatorArgparse(argparse.Action):
     def __call__(self, parser, namespace, paths, option_string=None):
