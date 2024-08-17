@@ -303,11 +303,21 @@ def status(invocation):
 
             tracked = True
             subtree = deepcopy(path_tree)
-            while path_parts:
-                next_lookup: str = path_parts.pop(0)
+            prefix_parts = []
+            suffix_parts = path_parts[:]
+            while suffix_parts:
+                prefix_parts.append(suffix_parts[0])
+                suffix_parts = suffix_parts[1:]
+                next_lookup: str = prefix_parts[-1]
                 subtree = subtree.get(next_lookup, None)
-                if subtree is None: # untracked file
-                    untracked_files.add(rel_path)
+                if subtree is None: # untracked file/dir
+                    # using untracked path like this ensures that it only lists the
+                    # shallowest untracked directory, rather than listing the entire contents
+                    # as untracked
+                    untracked_path = os.path.join(*prefix_parts)
+                    if os.path.isdir(untracked_path):
+                        untracked_path += os.sep
+                    untracked_files.add(untracked_path)
                     tracked = False
                     break
                 elif isinstance(subtree, list): # tracked FILE
@@ -317,6 +327,8 @@ def status(invocation):
                 # else, it's a tracked subtree and the loop continues
             if tracked:
                 print(f"{rel_path} is tracked!")
+
+    print(untracked_files)
 
                 
                 # next_part = path_parts.pop(0)
