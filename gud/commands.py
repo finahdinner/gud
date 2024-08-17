@@ -209,6 +209,10 @@ def stage(invocation):
     # convert all paths to rel_paths - this is how they will be stored in the index
     rel_paths_specified = [os.path.relpath(path, invocation.repo.root) for path in paths_specified]
 
+    for rel_path in rel_paths_specified:
+        # TODO - go through all files and if any file is ignored, cancel the operation and raise an error
+        ...
+
     if action == "add":
         index = invocation.repo.parse_index()
         for rel_path in rel_paths_specified:
@@ -223,6 +227,8 @@ def stage(invocation):
                     "hash": file_hash
                 }
             elif os.path.isdir(abs_path): # tree
+                # TODO - if a directory is added, just recursively add all files in the directory
+                # (all files except ignored files)
                 raise NotImplementedError("Adding directories has not been implemented yet")
         invocation.repo.write_to_index(index)
 
@@ -236,6 +242,29 @@ def stage(invocation):
         index = invocation.repo.parse_index()
         latest_commit = invocation.repo.head
         raise NotImplementedError("'Remove' has not been implemented yet.")
+    
+        # head_path = os.path.join(invocation.repo.path, "heads", invocation.repo.branch)
+        # with open(head_path, "r", encoding="utf-8") as f:
+        #     head_commit_hash = f.read().strip()
+        # if not head_commit_hash: # no commits are recorded
+        #     head_index = {}
+        # else:
+        #     commit = Commit(invocation.repo)
+        #     head_commit_contents = commit.get_content(head_commit_hash).decode()
+        #     for line in head_commit_contents.split("\n"):
+        #         try:
+        #             type, value = line.split("\t")
+        #         except ValueError:
+        #             continue
+        #         else:
+        #             if type == "tree":
+        #                 root_tree_hash = value
+        #     if not root_tree_hash:
+        #         raise Exception(f"Could not find tree_hash from commit {head_commit_hash}")
+        #     # generate an "head_index" by recursively inspecting all the tree objects
+        #     tree = Tree(invocation.repo)
+        #     head_index = tree._read_tree_object(root_tree_hash, curr_path="")
+
 
 
 def commit(invocation):
@@ -284,9 +313,10 @@ def status(invocation, print_output=True) -> dict[str, dict]:
     staged_index = tree.index
 
     """ Determine STAGED file differences (where index =/ last commit) """
-    head_path = os.path.join(invocation.repo.path, "heads", invocation.repo.branch)
-    with open(head_path, "r", encoding="utf-8") as f:
-        head_commit_hash = f.read().strip()
+    # head_path = os.path.join(invocation.repo.path, "heads", invocation.repo.branch)
+    # with open(head_path, "r", encoding="utf-8") as f:
+    #     head_commit_hash = f.read().strip()
+    head_commit_hash = invocation.repo.head
     if not head_commit_hash: # no commits are recorded
         head_index = {}
     else:
@@ -323,11 +353,25 @@ def status(invocation, print_output=True) -> dict[str, dict]:
 
     """ Determine UNSTAGED file differences (where working directory =/ index) """
     # build a path_tree for the current index
+
     all_path_parts = [path.split(os.sep) for path in staged_index.keys()]
     path_tree = tree._build_path_tree(all_path_parts)
 
-    # find all ignored files
-    ignored_paths = ignoring(invocation, for_printing_to_user=False)
+    # find all ignored files (this is messy but seems to work like git?)
+    ignored_abs_paths = ignoring(invocation, for_printing_to_user=False)
+    abs_staged_index_without_ignored_files = set(os.path.join(invocation.repo.root, path) for path in staged_index.keys())
+    for path in abs_staged_index_without_ignored_files.copy():
+        for ignored_path in ignored_abs_paths:
+            if ignored_path.endswith("/"): # directory
+                if path.startswith(ignored_path):
+                    print(f"{path} starts with {ignored_path}")
+                    abs_staged_index_without_ignored_files.remove(path)
+            else:
+                if ignored_path == path:
+                    abs_staged_index_without_ignored_files.remove(path)
+    rel_staged_index_without_ignored = set(
+        os.path.relpath(path, invocation.repo.root) for path in abs_staged_index_without_ignored_files
+    )
 
     unstaged_added_files = set()
     unstaged_modified_files = set()
@@ -338,14 +382,14 @@ def status(invocation, print_output=True) -> dict[str, dict]:
     for root, subdirs, files in os.walk(repo_root):
         root_formatted = format_path_for_gudignore(root)
         # stop traversing any directory that is listed in gudignore
-        if root_formatted in ignored_paths:
+        if root_formatted in ignored_abs_paths:
             subdirs[:] = [] # prevents traversal of ignored directories
             continue
         for file in files:
             full_path = os.path.join(root, file)
             full_path_formatted = format_path_for_gudignore(full_path)
             # if any of the ignored paths is a prefix to the current path, ignore the current path
-            if any(full_path_formatted.startswith(ignored_path) for ignored_path in ignored_paths):
+            if any(full_path_formatted.startswith(ignored_path) for ignored_path in ignored_abs_paths):
                 continue
 
             rel_path = os.path.relpath(full_path, invocation.repo.root)
@@ -381,7 +425,7 @@ def status(invocation, print_output=True) -> dict[str, dict]:
                 # else, it's a tracked subtree and the loop continues
     
     # checks which staged/indexed files were not traversed
-    unstaged_deleted_files = staged_index.keys() - working_dir_paths_traversed
+    unstaged_deleted_files = rel_staged_index_without_ignored - working_dir_paths_traversed
 
     """ Print out everything we determined from this whole function """
     staged = {
