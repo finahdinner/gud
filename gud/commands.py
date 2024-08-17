@@ -267,18 +267,6 @@ def commit(invocation):
     heads_path = os.path.join(invocation.repo.path, "heads", invocation.repo.branch)
     with open(heads_path, "w", encoding="utf-8") as f:
         f.write(commit_hash)
-
-    # FOR TESTING
-    # commit_contents = commit.get_content(commit_hash).decode()
-    # print(commit_contents)
-    # for line in commit_contents.split("\n"):
-    #     try:
-    #         type, value = line.split("\t")
-    #     except ValueError:
-    #         continue
-    #     else:
-    #         if type == "tree":
-    #             print("Tree hash:", value)
     
 
 def status(invocation):
@@ -300,7 +288,7 @@ def status(invocation):
         root_formatted = format_path_for_gudignore(root)
         # stop traversing any directory that is listed in gudignore
         if root_formatted in ignored_paths:
-            subdirs[:] = [] # prevents traversal of 
+            subdirs[:] = [] # prevents traversal of ignored directories
             continue
         for file in files:
             full_path = os.path.join(root, file)
@@ -372,6 +360,17 @@ def status(invocation):
         - if the hash is different, label as "tracked_changed" (or "tracked_modified")
         - if a file exists in the live index but not the commit's index, list as "tracked_added" (or similar)
         - if the file exists in the commit index but not the live index, list as "tracked_deleted" (or similar)
+
+    6 categories for files:
+
+    staged_modified
+    staged_deleted
+    staged_added
+
+    unstaged_modified
+    unstaged_deleted
+    unstaged_added
+
     """
 
     # TODO - read the latest commit and create an "index" by recursively inspecting each tree and collating
@@ -398,12 +397,40 @@ def status(invocation):
         tree = Tree(invocation.repo)
         head_index = tree._read_tree_object(root_tree_hash, curr_path="")
 
-    # compare head_index to current_index
-    current_index = invocation.repo.parse_index()
-    print(f"{current_index=}")
+    # compare head_index to staged_index
+    staged_index = invocation.repo.parse_index()
+    print(f"{staged_index=}")
     print(f"{head_index=}")
 
-    # print(head_index)
-    # all_path_parts = [path.split(os.sep) for path in head_index.keys()]
-    # head_path_tree = tree._build_path_tree(all_path_parts)
-    # print(f"{head_path_tree=}")
+    files_in_head_index = set(head_index)
+    files_in_staged_index = set(staged_index)
+
+    _staged_existing_files = files_in_head_index & files_in_staged_index
+    staged_modified_files = set()
+    for file_path in _staged_existing_files:
+        # simple implementation to see if anything about the file has changed
+        info_str_head = "".join(head_index[file_path].values())
+        info_str_staged = "".join(staged_index[file_path].values())
+        print(info_str_head, info_str_staged)
+        if info_str_head != info_str_staged: # modified file
+            staged_modified_files.add(file_path)
+
+    staged_deleted_files = files_in_head_index - files_in_staged_index
+    staged_added_files = files_in_staged_index - files_in_head_index
+
+    print(f"{deleted_files=}")
+    print(f"{new_files=}")
+    print(f"{modified_files=}")
+
+    return {
+        "staged": {
+            "modified": staged_modified_files,
+            "added": staged_added_files,
+            "deleted": staged_deleted_files,
+        },
+        "unstaged": {
+            "modified": ...,
+            "added": ...,
+            "deleted": ...,
+        }
+    }
