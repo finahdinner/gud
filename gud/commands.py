@@ -27,8 +27,7 @@ from copy import deepcopy
 def test(invocation):
     print("This is a test command!")
     tree = Tree(invocation.repo)
-    tree_hash = tree.serialise()
-    tree_content_readable = tree.get_content(tree_hash).decode()
+    tree_content_readable = tree.get_content("b480ff3304752e7c0fca6efe19a06e5e6d3fffd5").decode()
     for line in tree_content_readable.split("\n"):
         print(line)
     tree_content_readable_2 = tree.get_content("4e6ae3bed9d1cba90a642020f7a17146731cae01").decode()
@@ -392,14 +391,19 @@ def status(invocation):
                 continue
             else:
                 if type == "tree":
-                    tree_hash = value
-        if not tree_hash:
+                    root_tree_hash = value
+        if not root_tree_hash:
             raise Exception(f"Could not find tree_hash from commit {head_commit_hash}")
-        print(tree_hash)
+        # generate an "head_index" by recursively inspecting all the tree objects
+        tree = Tree(invocation.repo)
+        head_index = tree._read_tree_object(root_tree_hash, curr_path="")
 
+    # compare head_index to current_index
+    current_index = invocation.repo.parse_index()
+    print(f"{current_index=}")
+    print(f"{head_index=}")
 
-
-
-    all_path_parts = [path.split(os.sep) for path in head_index.keys()]
-    head_path_tree = tree._build_path_tree(all_path_parts)
-    print(f"{head_path_tree=}")
+    # print(head_index)
+    # all_path_parts = [path.split(os.sep) for path in head_index.keys()]
+    # head_path_tree = tree._build_path_tree(all_path_parts)
+    # print(f"{head_path_tree=}")

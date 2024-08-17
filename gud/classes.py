@@ -218,8 +218,6 @@ class GudObject:
         Serialised/stored data -> usable/readable data
         """
         full_file_path = self.get_full_file_path_from_hash(obj_hash)
-        print(f"{obj_hash=}")
-        print(f"{full_file_path=}")
         with open(full_file_path, "rb") as f:
             full_content = f.read()
         try:
@@ -373,7 +371,44 @@ class Tree(GudObject):
         uncompressed_content = b"".join((line.encode() for line in tree_file_lines))
         tree_hash = super().serialise_object(uncompressed_content, "tree", write_to_file=True)
         return tree_hash
+    
+    def _read_tree_object(self, tree_hash, curr_path, indexed_files=None):
+        """
+        create an index (as a dictionary), representing all files descended from a specified
+        tree_hash. it contains info about their mode, type, hash and path
+        """
+        if indexed_files is None:
+            indexed_files = {}
+        content = self.deserialise_object(tree_hash).decode()
+        lines = content.split("\n")
+        # collect blobs and trees
+        blobs = []
+        trees = []
+        for line in lines:
+            if not line.strip():
+                continue
+            mode, type, hash, path = line.split("\t")
+            if type == "blob":
+                blobs.append((mode, type, hash, path))
+            elif type == "tree":
+                trees.append((mode, type, hash, path))
+        # index blobs first
+        for mode, type, hash, path in blobs:
+            full_path = os.path.join(curr_path, path)
+            print(f"Indexing {full_path}")
+            indexed_files[full_path] = {
+                "type": type,
+                "mode": mode,
+                "hash": hash
+            }
+        # once all blobs have been processed from this tree, recurse into deeper trees
+        for mode, type, hash, path in trees:
+            tree_hash = hash
+            curr_path = os.path.join(curr_path, path)
+            self._read_tree_object(tree_hash, curr_path=curr_path, indexed_files=indexed_files)
 
+        return indexed_files
+    
 class Commit(GudObject):
     def __init__(self, repo, tree_hash=None, commit_message=None, timestamp=None):
         super().__init__(repo)
