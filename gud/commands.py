@@ -201,7 +201,6 @@ def stage(invocation):
                 print(f"Path {path} does not exist within the repository, so cannot be {connective} the staging area")
                 continue
             paths_specified.add(abs_path) # store the rel path
-            # TODO - instead of the below, call gud status (once implemented) between each file selection
             print(f"Files/directories to be {connective} the staging area:")
             for path in paths_specified:
                 print(path)
@@ -209,28 +208,38 @@ def stage(invocation):
     # convert all paths to rel_paths - this is how they will be stored in the index
     rel_paths_specified = [os.path.relpath(path, invocation.repo.root) for path in paths_specified]
 
-    for rel_path in rel_paths_specified:
-        # TODO - go through all files and if any file is ignored, cancel the operation and raise an error
-        ...
-
     if action == "add":
+        # "expand" directories into their specific files
+        for rel_path in rel_paths_specified:
+            if os.path.isdir(rel_path):
+                rel_paths_specified.remove(rel_path) # remove the directory path
+                for file in os.listdir(rel_path):
+                    rel_file_path = os.path.join(rel_path, file)
+                    rel_paths_specified.append(rel_file_path)
+
+        # this should only contain files now, not directories
+        abs_paths_specified = [os.path.join(invocation.repo.root, path) for path in rel_paths_specified]
+        ignored_abs_paths = ignoring(invocation, for_printing_to_user=False)
+        for abs_path in abs_paths_specified:
+            for ignored_path in ignored_abs_paths:
+                if ignored_path.endswith("/"): # directory
+                    if abs_path.startswith(ignored_path):
+                        sys.exit(f"{abs_path} is being ignored by Gud.\nPlease remove it from your `.gudignore` file(s) if you wish to stage it.")
+                else:
+                    if ignored_path == abs_path:
+                        sys.exit(f"{abs_path} is being ignored by Gud.\nPlease remove it from your `.gudignore` file(s) if you wish to stage it.")
+
         index = invocation.repo.parse_index()
         for rel_path in rel_paths_specified:
             abs_path = os.path.join(invocation.repo.root, rel_path)
-            if os.path.isfile(abs_path): # blob
-                blob = Blob(repo=invocation.repo)
-                file_hash = blob.serialise(abs_path, write_to_file=True)
-                file_mode = get_file_mode(abs_path)
-                index[rel_path] = {
-                    "type": "blob",
-                    "mode": file_mode,
-                    "hash": file_hash
-                }
-            elif os.path.isdir(abs_path): # tree
-                # TODO - if a directory is added, just recursively add all files in the directory
-                # (all files except ignored files)
-                raise NotImplementedError("Adding directories has not been implemented yet")
-        invocation.repo.write_to_index(index)
+            blob = Blob(repo=invocation.repo)
+            file_hash = blob.serialise(abs_path, write_to_file=True)
+            file_mode = get_file_mode(abs_path)
+            index[rel_path] = {
+                "type": "blob",
+                "mode": file_mode,
+                "hash": file_hash
+            }
 
     elif action == "remove":
         # TODO - remove from the staging area
@@ -243,28 +252,8 @@ def stage(invocation):
         latest_commit = invocation.repo.head
         raise NotImplementedError("'Remove' has not been implemented yet.")
     
-        # head_path = os.path.join(invocation.repo.path, "heads", invocation.repo.branch)
-        # with open(head_path, "r", encoding="utf-8") as f:
-        #     head_commit_hash = f.read().strip()
-        # if not head_commit_hash: # no commits are recorded
-        #     head_index = {}
-        # else:
-        #     commit = Commit(invocation.repo)
-        #     head_commit_contents = commit.get_content(head_commit_hash).decode()
-        #     for line in head_commit_contents.split("\n"):
-        #         try:
-        #             type, value = line.split("\t")
-        #         except ValueError:
-        #             continue
-        #         else:
-        #             if type == "tree":
-        #                 root_tree_hash = value
-        #     if not root_tree_hash:
-        #         raise Exception(f"Could not find tree_hash from commit {head_commit_hash}")
-        #     # generate an "head_index" by recursively inspecting all the tree objects
-        #     tree = Tree(invocation.repo)
-        #     head_index = tree._read_tree_object(root_tree_hash, curr_path="")
-
+    invocation.repo.write_to_index(index)
+    print(f"{len(rel_paths_specified)} files {connective} the staging area.\nUse `gud status` for more details.\nUse `gud commit` when ready to commit.")
 
 
 def commit(invocation):
@@ -364,7 +353,6 @@ def status(invocation, print_output=True) -> dict[str, dict]:
         for ignored_path in ignored_abs_paths:
             if ignored_path.endswith("/"): # directory
                 if path.startswith(ignored_path):
-                    print(f"{path} starts with {ignored_path}")
                     abs_staged_index_without_ignored_files.remove(path)
             else:
                 if ignored_path == path:
