@@ -395,7 +395,6 @@ class Tree(GudObject):
         # index blobs first
         for mode, type, hash, path in blobs:
             full_path = os.path.join(curr_path, path)
-            print(f"Indexing {full_path}")
             indexed_files[full_path] = {
                 "type": type,
                 "mode": mode,

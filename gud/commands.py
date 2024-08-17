@@ -239,9 +239,9 @@ def stage(invocation):
 
 
 def commit(invocation):
-    # TODO - initially check to see if any files are staged -- need to compare to HEAD commit
-    # if no files are staged, prevent the commit from occurring
-    # improve Gud Status, and you can just run it here to perform the above
+    file_changes = status(invocation, print_output=False)
+    if not any(file_changes["staged"].values()):
+        sys.exit("You cannot commit, as there are no changes in the staging area.")
 
     # create the tree object(s), using the current index
     tree = Tree(invocation.repo)
@@ -268,7 +268,7 @@ def commit(invocation):
     print(f"Successfully committed on branch {invocation.repo.branch}.\nUse `gud log` to view commit history.")
     
 
-def status(invocation) -> dict[str, dict]:
+def status(invocation, print_output=True) -> dict[str, dict]:
     """
     6 categories for files:
 
@@ -315,7 +315,6 @@ def status(invocation) -> dict[str, dict]:
         # simple implementation to see if anything about the file has changed
         info_str_head = "".join(head_index[file_path].values())
         info_str_staged = "".join(staged_index[file_path].values())
-        print(info_str_head, info_str_staged)
         if info_str_head != info_str_staged: # modified file
             staged_modified_files.add(file_path)
 
@@ -397,35 +396,37 @@ def status(invocation) -> dict[str, dict]:
         "deleted": sorted(unstaged_deleted_files)
     }
 
-    # if both staged and unstaged are empty
-    if not (any(staged.values()) or any(unstaged.values())):
-        print("nothing to commit, working tree clean")
+    if print_output:
 
-    else:
+        # if both staged and unstaged are empty
+        if not (any(staged.values()) or any(unstaged.values())):
+            print("nothing to commit, working tree clean")
 
-        if any(staged.values()):
-            print("Changes to be committed:\n  Use `gud stage remove <file>` to remove a file from the staging area")
-            for file_path in staged["modified"]:
-                print(f"\tmodified: {file_path}")
-            for file_path in staged["deleted"]:
-                print(f"\tdeleted: {file_path}")
-            for file_path in staged["added"]:
-                print(f"\tnew file: {file_path}")
-            print()
+        else:
 
-        if unstaged["modified"] or unstaged["deleted"]:
-            print("Changes not staged for commit:\n  Use `gud stage add <file>` to update a file in the staging area")
-            for file_path in unstaged["modified"]:
-                print(f"\tmodified: {file_path}")
-            for file_path in unstaged["deleted"]:
-                print(f"\tdeleted: {file_path}")
-            print()
+            if any(staged.values()):
+                print("Changes to be committed:\n  Use `gud stage remove <file>` to remove a file from the staging area")
+                for file_path in staged["modified"]:
+                    print(f"\tmodified: {file_path}")
+                for file_path in staged["deleted"]:
+                    print(f"\tdeleted: {file_path}")
+                for file_path in staged["added"]:
+                    print(f"\tnew file: {file_path}")
+                print()
 
-        if unstaged["added"]:
-            print("Untracked files:\n  Use `gud stage add <file>` to include a file in the staging area")
-            for file_path in unstaged["added"]:
-                print(f"\tnew file: {file_path}")
-            print()
+            if unstaged["modified"] or unstaged["deleted"]:
+                print("Changes not staged for commit:\n  Use `gud stage add <file>` to update a file in the staging area")
+                for file_path in unstaged["modified"]:
+                    print(f"\tmodified: {file_path}")
+                for file_path in unstaged["deleted"]:
+                    print(f"\tdeleted: {file_path}")
+                print()
+
+            if unstaged["added"]:
+                print("Untracked files:\n  Use `gud stage add <file>` to include a file in the staging area")
+                for file_path in unstaged["added"]:
+                    print(f"\tnew file: {file_path}")
+                print()
 
     return {
         "staged": staged,
