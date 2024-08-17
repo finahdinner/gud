@@ -89,17 +89,11 @@ what is returned when you do `os.stat(file_path).st_mode`)
 
 
 IMPORTANT TODO (priority HIGH to LOW):
-    - when gud status is called, it should first and foremost generate a directory tree (with the
-    structure above), and then determine the set of all files that are ignored, then it should
-    go through every file in the working dir, hash it (WITHOUT WRITING TO FILE),
-    and look it up in the directory tree (if the file is ignored, it should skip this part)
-        - if the file path doesn't exist in the directory tree, the file should be labelled as "untracked"
-        - if the file path DOES exist in the directory tree, and the hash is DIFFERENT, then it should appear
-        as "changed"
-        - if the file path DOES exist in the directory tree, and the hash is the same, then it shouldn't appear
-        in the gud status output
+    GUD STATUS:
         - if any file/dir in the directory tree has not been traversed by the time all files in the working dir have
         been checked, then these files/dirs should be marked as "deleted"
+    GUD COMMIT:
+        - prevent the user from committing if there is nothing staged
     - account for deleted files when doing gud stage add/remove
         - this means that deleted files/folders should appear in the autocomplete in questionary
         probably need to add a filter or something to the questionary.path() func
@@ -119,3 +113,12 @@ EDGE CASES:
 DONE:
     - when building the directory tree (nested dicts etc), instead of storing None for the files,
     store their important info (mode, hash) in a list. so that dict = directory, list = file/blob
+    - when gud status is called, it should first and foremost generate a directory tree (with the
+    structure above), and then determine the set of all files that are ignored, then it should
+    go through every file in the working dir, hash it (WITHOUT WRITING TO FILE),
+    and look it up in the directory tree (if the file is ignored, it should skip this part)
+        - if the file path doesn't exist in the directory tree, the file should be labelled as "untracked"
+        - if the file path DOES exist in the directory tree, and the hash is DIFFERENT, then it should appear
+        as "changed"
+        - if the file path DOES exist in the directory tree, and the hash is the same, then it shouldn't appear
+        in the gud status output

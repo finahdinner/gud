@@ -27,7 +27,13 @@ from copy import deepcopy
 def test(invocation):
     print("This is a test command!")
     tree = Tree(invocation.repo)
-    tree.serialise()
+    tree_hash = tree.serialise()
+    tree_content_readable = tree.get_content(tree_hash).decode()
+    for line in tree_content_readable.split("\n"):
+        print(line)
+    tree_content_readable_2 = tree.get_content("4e6ae3bed9d1cba90a642020f7a17146731cae01").decode()
+    for line in tree_content_readable_2.split("\n"):
+        print(line)
     
 
 def hello(invocation):
@@ -236,13 +242,13 @@ def stage(invocation):
 def commit(invocation):
     # TODO - initially check to see if any files are staged -- need to compare to HEAD commit
     # if no files are staged, prevent the commit from occurring
+    # improve Gud Status, and you can just run it here to perform the above
 
     # create the tree object(s), using the current index
     tree = Tree(invocation.repo)
     tree_hash = tree.serialise()
     print(f"{tree_hash=}")
 
-    #
     commit_message = questionary.text(
         "What changes does this commit represent?",
         validate=TextValidatorQuestionaryNotEmpty()
@@ -263,9 +269,17 @@ def commit(invocation):
     with open(heads_path, "w", encoding="utf-8") as f:
         f.write(commit_hash)
 
-    # FOR TESTING
     commit_contents = commit.get_content(commit_hash).decode()
-    print(commit_contents)
+    # FOR TESTING
+    # print(commit_contents)
+    # for line in commit_contents.split("\n"):
+    #     try:
+    #         type, value = line.split("\t")
+    #     except ValueError:
+    #         continue
+    #     else:
+    #         if type == "tree":
+    #             print("Tree hash:", value)
     
 
 def status(invocation):
@@ -345,3 +359,20 @@ def status(invocation):
                 print("\t", path)
             print()
 
+    """
+    TODO - amend Gud status so that:
+    - untracked files remain the same as the current implementation
+    - instead of splitting into tracked_changed and tracked_unchanged at this point,
+    just classify tracked files as tracked (with no distinction between changed and unchanged)
+    - now, parse the latest commit (HEAD), recursively going through all the trees defined inside,
+    and build an index using this commit
+    - compare the index from the HEAD commit, to the live index at .gud/index
+    - compare each file, one-by-one:
+        - if the hash is the same, label as "tracked_unchanged"
+        - if the hash is different, label as "tracked_changed" (or "tracked_modified")
+        - if a file exists in the live index but not the commit's index, list as "tracked_added" (or similar)
+        - if the file exists in the commit index but not the live index, list as "tracked_deleted" (or similar)
+    """
+
+    # TODO - read the latest commit and create an "index" by recursively inspecting each tree and collating
+    # all the blob files (including their modes, hashes and file paths) from each

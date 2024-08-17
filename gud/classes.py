@@ -365,7 +365,7 @@ class Tree(GudObject):
                 mode = "040000" # this is the mode git uses for directories
                 type = "tree"
             # insert a single row representing the blob or tree
-            tree_file_lines.append(f"{mode}\t{type}\t{hash}\t{name}")
+            tree_file_lines.append(f"{mode}\t{type}\t{hash}\t{name}\n")
 
         # using tree_file_lines, create and hash the actual file
         uncompressed_content = b"".join((line.encode() for line in tree_file_lines))
@@ -406,8 +406,8 @@ class Commit(GudObject):
         Serialised/stored data -> usable/readable data
         """
         file_content = super().deserialise_object(commit_hash, expected_type="commit")
-        return file_content
-
+        return file_content   
+        
 
 class PathValidatorQuestionary(Validator):
     def validate(self, document):
