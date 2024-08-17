@@ -299,9 +299,7 @@ def status(invocation):
             # TODO - traverse the path_tree for any file that isn't ignored
             rel_path = os.path.relpath(full_path, invocation.repo.root)
             path_parts = rel_path.split("/")
-            # print(path_parts)
 
-            tracked = True
             subtree = deepcopy(path_tree)
             prefix_parts = []
             suffix_parts = path_parts[:]
@@ -310,60 +308,30 @@ def status(invocation):
                 suffix_parts = suffix_parts[1:]
                 next_lookup: str = prefix_parts[-1]
                 subtree = subtree.get(next_lookup, None)
+                file_path_so_far = os.path.join(*prefix_parts)
                 if subtree is None: # untracked file/dir
                     # using untracked path like this ensures that it only lists the
                     # shallowest untracked directory, rather than listing the entire contents
                     # as untracked
-                    untracked_path = os.path.join(*prefix_parts)
-                    if os.path.isdir(untracked_path):
-                        untracked_path += os.sep
-                    untracked_files.add(untracked_path)
-                    tracked = False
+                    if os.path.isdir(file_path_so_far):
+                        file_path_so_far += os.sep # trailing slash if dir - is clearer in the output
+                    untracked_files.add(file_path_so_far)
                     break
                 elif isinstance(subtree, list): # tracked FILE
                     # TODO - compare the file's stored has to a new, computed hash for the file
                     # print(subdir)
+                    old_mode = subtree[0]
+                    old_hash = subtree[1]
+                    blob = Blob(invocation.repo)
+                    new_mode = get_file_mode(file_path_so_far)
+                    new_hash = blob.serialise(file_path_so_far, write_to_file=False)
+                    if old_mode == new_mode and old_hash == new_hash:
+                        tracked_unchanged_files.add(file_path_so_far)
+                    else:
+                        tracked_changed_files.add(file_path_so_far)
                     break
                 # else, it's a tracked subtree and the loop continues
-            if tracked:
-                print(f"{rel_path} is tracked!")
 
-    print(untracked_files)
-
-                
-                # next_part = path_parts.pop(0)
-                # subdir = path_tree.get(next_part, None)
-                # if not subdir: # untracked file
-                #     untracked_files.add(subdir)
-                #     break
-                # print(subdir)
-            # at this point, you have reached a specific file that IS being tracked
-            # tracked_files.add([])
-            # print(path_parts)
-
-
-
-    # # parse the index to get the latest virtual "tree"
-    # repo_root = invocation.repo.root
-    # indexed_files = invocation.repo.parse_index()
-
-    # # TODO - finish all these below
-    # changed_files = {}
-    # untracked_files = {}
-
-    # all_ignored_file_paths = get_all_ignored_paths(repo_root)
-    # for root, subdirs, files in os.walk(repo_root):
-    #     for file_path in files:
-    #         full_path = os.path.join(root, file_path)
-    #         # check if the file is ignored
-    #         if full_path in all_ignored_file_paths:
-    #             continue
-    #         # check if the file is in the index
-    #         rel_path = os.path.relpath(full_path, repo_root) # path relative to root of the repo
-    #         indexed_file = indexed_files(rel_path, None)
-    #         if not indexed_file:
-    #             # TODO - implement
-    #             ...
-    #         else:
-    #             # check file permissions and hash the file, and see if either of those have changed
-    #             ...
+    print(f"{untracked_files=}")
+    print(f"{tracked_changed_files=}")
+    print(f"{tracked_unchanged_files=}")
