@@ -408,6 +408,27 @@ class Tree(GudObject):
 
         return indexed_files
     
+    def get_head_index(self, commit_obj) -> dict:
+        """ Get an index representation of the HEAD commit """
+        head_commit_hash = self.repo.head
+        if not head_commit_hash: # no commits are recorded
+            head_index = {}
+        else:
+            head_commit_contents = commit_obj.get_content(head_commit_hash).decode()
+            for line in head_commit_contents.split("\n"):
+                try:
+                    type, value = line.split("\t")
+                except ValueError:
+                    continue
+                else:
+                    if type == "tree":
+                        root_tree_hash = value
+            if not root_tree_hash:
+                raise Exception(f"Could not find tree_hash from commit {head_commit_hash}")
+            # generate an "head_index" by recursively inspecting all the tree objects
+            head_index = self._read_tree_object(root_tree_hash, curr_path="")
+        return head_index
+    
 class Commit(GudObject):
     def __init__(self, repo, tree_hash=None, commit_message=None, timestamp=None):
         super().__init__(repo)

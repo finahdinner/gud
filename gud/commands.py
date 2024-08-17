@@ -208,15 +208,15 @@ def stage(invocation):
     # convert all paths to rel_paths - this is how they will be stored in the index
     rel_paths_specified = [os.path.relpath(path, invocation.repo.root) for path in paths_specified]
 
-    if action == "add":
-        # "expand" directories into their specific files
-        for rel_path in rel_paths_specified:
-            if os.path.isdir(rel_path):
-                rel_paths_specified.remove(rel_path) # remove the directory path
-                for file in os.listdir(rel_path):
-                    rel_file_path = os.path.join(rel_path, file)
-                    rel_paths_specified.append(rel_file_path)
+    # "expand" directories into their specific files
+    for rel_path in rel_paths_specified:
+        if os.path.isdir(rel_path):
+            rel_paths_specified.remove(rel_path) # remove the directory path
+            for file in os.listdir(rel_path):
+                rel_file_path = os.path.join(rel_path, file)
+                rel_paths_specified.append(rel_file_path)
 
+    if action == "add":
         # this should only contain files now, not directories
         abs_paths_specified = [os.path.join(invocation.repo.root, path) for path in rel_paths_specified]
         ignored_abs_paths = ignoring(invocation, for_printing_to_user=False)
@@ -240,19 +240,22 @@ def stage(invocation):
                 "mode": file_mode,
                 "hash": file_hash
             }
+        invocation.repo.write_to_index(index) 
 
     elif action == "remove":
-        # TODO - remove from the staging area
-        # if a file is 'removed' from the staging area, this just means to replace its line in
-        # the index with the file info from the last commit
-        # if the file didn't exist in the last commit, the line in index will be removed
-        # if it did exist in the last commit, the line will just be modified to reflect
-        # the version of the file as it was at the last commit
-        index = invocation.repo.parse_index()
-        latest_commit = invocation.repo.head
-        raise NotImplementedError("'Remove' has not been implemented yet.")
+        curr_index = invocation.repo.parse_index()
+        commit = Commit(invocation.repo)
+        tree = Tree(invocation.repo)
+        head_index = tree.get_head_index(commit_obj=commit)
+        # revert the file(s) to their previous version, if it exists, else remove entirely from the index
+        for rel_path in rel_paths_specified:
+            previous_version_of_file = head_index.get(rel_path, None)
+            if previous_version_of_file is None: # file didn't exist at the last commit
+                del curr_index[rel_path]
+            else:
+                curr_index[rel_path] = previous_version_of_file
+        invocation.repo.write_to_index(curr_index)
     
-    invocation.repo.write_to_index(index)
     print(f"{len(rel_paths_specified)} files {connective} the staging area.\nUse `gud status` for more details.\nUse `gud commit` when ready to commit.")
 
 
@@ -302,9 +305,6 @@ def status(invocation, print_output=True) -> dict[str, dict]:
     staged_index = tree.index
 
     """ Determine STAGED file differences (where index =/ last commit) """
-    # head_path = os.path.join(invocation.repo.path, "heads", invocation.repo.branch)
-    # with open(head_path, "r", encoding="utf-8") as f:
-    #     head_commit_hash = f.read().strip()
     head_commit_hash = invocation.repo.head
     if not head_commit_hash: # no commits are recorded
         head_index = {}
