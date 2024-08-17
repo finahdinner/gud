@@ -290,16 +290,12 @@ class Tree(GudObject):
     def serialise(self):
         """
         - read the current index and create and save a path_tree object from it
-        - creating the tree involves grouping the children of each directory
+        - using the tree, and the hashes stored in it, generate and save tree objects
         """
         all_path_parts = [path.split(os.sep) for path in self.index.keys()]
-        # contains only file paths, not extra data etc
-        path_tree = self._build_path_tree(all_path_parts)
-        # print(path_tree)
-        # TODO - use this path_tree structure to create the necessary files in .gud/objects
-        self.create_tree_object(path_tree)
+        path_tree = self._build_path_tree(all_path_parts) # file paths and blob hashes
+        self._create_tree_object(path_tree) # creates all the tree objects
         
-
     def get_content(self, tree_hash) -> bytes:
         """
         Serialised/stored data -> usable/readable data
@@ -355,7 +351,7 @@ class Tree(GudObject):
             )
         return tree
     
-    def create_tree_object(self, path_tree):
+    def _create_tree_object(self, path_tree):
         """
         Creates all the tree objects in .gud/objects
         """
@@ -366,12 +362,13 @@ class Tree(GudObject):
                 mode, hash = subtree
                 type = "blob"
             else: # is a subtree (expected to be a dict)
-                hash = self.create_tree_object(subtree)
+                hash = self._create_tree_object(subtree)
                 mode = "040000" # this is the mode git uses for directories
                 type = "tree"
             # insert a single row representing the blob or tree
             tree_file_lines.append(f"{mode}\t{type}\t{hash}\t{name}")
 
+        print(tree_file_lines)
         # using tree_file_lines, create and hash the actual file
         uncompressed_content = b"".join((line.encode() for line in tree_file_lines))
         uncompressed_size = len(uncompressed_content)
