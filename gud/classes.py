@@ -341,7 +341,6 @@ class Tree(GudObject):
             - files (represented by [mode, hash])
         """
         all_path_parts = [path.split(os.sep) for path in self.index.keys()]
-        print(f"{all_path_parts=}")
         tree = {}
         for path_parts in all_path_parts:
             self._insert_path_into_tree(
@@ -368,7 +367,6 @@ class Tree(GudObject):
             # insert a single row representing the blob or tree
             tree_file_lines.append(f"{mode}\t{type}\t{hash}\t{name}")
 
-        print(tree_file_lines)
         # using tree_file_lines, create and hash the actual file
         uncompressed_content = b"".join((line.encode() for line in tree_file_lines))
         tree_hash = super().serialise_object(uncompressed_content, "tree", write_to_file=True)

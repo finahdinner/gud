@@ -148,22 +148,23 @@ def config(invocation):
             print(f.read())
 
 
-def ignoring(invocation, include_gud_folder=False) -> set:
+def ignoring(invocation, for_printing_to_user=True) -> set:
     """
     Show all files in this repository that Gud is set to ignore
     Find all .gudignore files, and print them out in stdout
     Make sure to label each file above its contents, and make it clear/well-formatted
     """
     repo_root = invocation.repo.root
-    all_ignored_file_paths = get_all_ignored_paths(repo_root)
-    if include_gud_folder:
-        all_ignored_file_paths.add(format_path_for_gudignore(invocation.repo.path))
-    if not all_ignored_file_paths:
-        print(f"No files/folders are being ignored in this repository ({invocation.repo.path})")
+    all_ignored_file_paths = get_all_ignored_paths(repo_root)        
+    if for_printing_to_user:
+        if not all_ignored_file_paths:
+            print(f"No files/folders are being ignored in this repository ({invocation.repo.path})")
+        else:
+            print(f"Gud is ignoring the following files/folders in this repository ({invocation.repo.path}):\n")
+            for file_path in sorted(all_ignored_file_paths):
+                print(file_path)
     else:
-        print(f"Gud is ignoring the following files/folders in this repository ({invocation.repo.path}):\n")
-        for file_path in sorted(all_ignored_file_paths):
-            print(file_path)
+        all_ignored_file_paths.add(format_path_for_gudignore(invocation.repo.path))
     return all_ignored_file_paths # return value for if another command calls this
 
 
@@ -271,11 +272,9 @@ def status(invocation):
     # build a path_tree
     tree = Tree(invocation.repo)
     path_tree = tree._build_path_tree()
-    print(path_tree)
 
     # find all ignored files
-    ignored_paths = ignoring(invocation, include_gud_folder=True)
-    print(ignored_paths)
+    ignored_paths = ignoring(invocation, for_printing_to_user=False)
 
     untracked_files = set()
     tracked_unchanged_files = set()
@@ -283,12 +282,10 @@ def status(invocation):
 
     # get all files in the working directory
     repo_root = invocation.repo.root
-    print("Checking all working dir files...")
     for root, subdirs, files in os.walk(repo_root):
         root_formatted = format_path_for_gudignore(root)
         # stop traversing any directory that is listed in gudignore
         if root_formatted in ignored_paths:
-            # print(f"IGNORING: {root_formatted}")
             subdirs[:] = [] # prevents traversal of 
             continue
         for file in files:
@@ -296,7 +293,6 @@ def status(invocation):
             full_path_formatted = format_path_for_gudignore(full_path)
             # if any of the ignored paths is a prefix to the current path, ignore the current path
             if any(full_path_formatted.startswith(ignored_path) for ignored_path in ignored_paths):
-                print(f"IGORNING: {full_path_formatted}")
                 continue
             # TODO - traverse the path_tree for any file that isn't ignored
             rel_path = os.path.relpath(full_path, invocation.repo.root)
@@ -320,8 +316,6 @@ def status(invocation):
                     untracked_files.add(file_path_so_far)
                     break
                 elif isinstance(subtree, list): # tracked FILE
-                    # TODO - compare the file's stored has to a new, computed hash for the file
-                    # print(subdir)
                     old_mode = subtree[0]
                     old_hash = subtree[1]
                     blob = Blob(invocation.repo)
@@ -334,6 +328,20 @@ def status(invocation):
                     break
                 # else, it's a tracked subtree and the loop continues
 
-    print(f"{untracked_files=}")
-    print(f"{tracked_changed_files=}")
-    print(f"{tracked_unchanged_files=}")
+    untracked_files = sorted(untracked_files)
+    tracked_changed_files = sorted(tracked_changed_files)
+
+    if not any([untracked_files, tracked_changed_files]):
+        print("nothing to commit, working tree clean")
+    else:
+        if tracked_changed_files:
+            print("Changes not staged for commit:\n  Use `gud add` to add a file to the staging area")
+            for path in tracked_changed_files:
+                print("\t", path)
+            print()
+        if untracked_files:
+            print("Untracked files:\n  Use `gud add` to add a file to the staging area")
+            for path in untracked_files:
+                print("\t", path)
+            print()
+
