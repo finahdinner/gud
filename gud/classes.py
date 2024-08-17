@@ -289,7 +289,7 @@ class Tree(GudObject):
 
     def serialise(self):
         """
-        - read the current index and create and save a tree object from it
+        - read the current index and create and save a path_tree object from it
         - creating the tree involves grouping the children of each directory
         """
         all_path_parts = [path.split(os.sep) for path in self.index.keys()]
@@ -297,6 +297,7 @@ class Tree(GudObject):
         path_tree = self._build_path_tree(all_path_parts)
         # print(path_tree)
         # TODO - use this path_tree structure to create the necessary files in .gud/objects
+        self.create_tree_object(path_tree)
         
 
     def get_content(self, tree_hash) -> bytes:
@@ -353,6 +354,39 @@ class Tree(GudObject):
                 suffix_parts=path_parts
             )
         return tree
+    
+    def create_tree_object(self, path_tree):
+        """
+        Creates all the tree objects in .gud/objects
+        """
+        tree_file_lines = []
+
+        for name, subtree in path_tree.items():
+            if isinstance(subtree, list): # it's a blob
+                mode, hash = subtree
+                type = "blob"
+            else: # is a subtree (expected to be a dict)
+                hash = self.create_tree_object(subtree)
+                mode = "040000" # this is the mode git uses for directories
+                type = "tree"
+            # insert a single row representing the blob or tree
+            tree_file_lines.append(f"{mode}\t{type}\t{hash}\t{name}")
+
+        # using tree_file_lines, create and hash the actual file
+        uncompressed_content = b"".join((line.encode() for line in tree_file_lines))
+        uncompressed_size = len(uncompressed_content)
+        tree_header = f"tree {uncompressed_size}\0".encode()
+        compressed_content = zlib.compress(uncompressed_content, level=COMPRESSION_LEVEL)
+        full_content = tree_header + compressed_content
+        tree_hash = sha1(full_content).hexdigest()
+        tree_file_path = self.get_full_file_path_from_hash(tree_hash)
+        dir_path = os.path.dirname(tree_file_path)
+        if not os.path.exists(dir_path):
+            os.mkdir(dir_path)
+        with open(tree_file_path, "wb") as f:
+            print("writing tree to file...", f"{tree_hash=}")
+            f.write(full_content)
+        return tree_hash
 
 class Commit(GudObject):
     def serialise(self) -> str:
