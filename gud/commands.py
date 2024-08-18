@@ -458,11 +458,18 @@ def status(invocation, print_output=True) -> dict:
     }
 
 
-def log(invocation):
+def log(invocation, internal_use=False) -> list|None:
+    """
+    internal_use -- represents whether this commnad was invoked within the code somewhere
+    if this is the case, there need be no output to the terminal, just a return value
+    """
+
     # get the HEAD commit
     head_commit_hash = invocation.repo.head
     if not head_commit_hash:
-        sys.exit(f"Your current branch {invocation.repo.branch} does not have any commits, so there are not logs to show.")
+        if not internal_use: # only show if the user invokes directly
+            sys.exit(f"Your current branch {invocation.repo.branch} does not have any commits, so there are not logs to show.")
+        return []
 
     commit = Commit(invocation.repo)
     commit_content = commit.get_content(head_commit_hash).decode()
@@ -489,6 +496,9 @@ def log(invocation):
             commit_has_parent = False
         all_commit_contents.append(curr_commit_content)
     
+    if internal_use: # if just wanting the values and don't need the output
+        return all_commit_contents
+
     # determine which program to run
     less_exists = see_if_command_exists("less")
     pager = "less" if less_exists else "more"
@@ -523,4 +533,23 @@ def log(invocation):
 
 
 def checkout(invocation):
-    ...
+    """
+    TODO - if the user specifies a specific hash/branch, checkout directly to that
+    otherwise
+    1) ask them (questionary.select) which branch they wish to checkout to
+    2) call gut log and create a questionary.select with all the commit hashes,
+    in descending chronological order. and let them select which hash.
+    """
+
+    if invocation.args.hash or invocation.args.branch:
+        if invocation.args.branch:
+            # TODO - query .gud/heads/ to find the branch, then get its commit_hash
+            ...
+        else:
+            commit_hash = invocation.args.hash
+        # TODO - checkout to the hash directly, then return from this function
+        
+    # else, follow what the doctstring specifies
+
+    all_commit_contents = log(invocation, internal_use=True)
+    print(all_commit_contents)

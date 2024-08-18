@@ -62,6 +62,7 @@ def main():
     all_args = parser.parse_args(sys.argv[1:])
     cwd = os.getcwd()
     invocation = CommandInvocation(all_args, cwd)
+    print(invocation.args)
 
     match invocation.command:
         # TODO - remove test command eventually
