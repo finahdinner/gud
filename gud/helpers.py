@@ -47,11 +47,27 @@ def open_relevant_editor(op_sys: OperatingSystem, file_path: str) -> None:
             subprocess.call(["nano", file_path])
 
 
-def open_relevant_pager(op_sys: OperatingSystem, file_path: str) -> None:
-    """ TODO - implement this """    
+def see_if_command_exists(op_sys: OperatingSystem, command: str):
+        try:
+            match op_sys.name:
+                case "WINDOWS":
+                    os.system(f"{command} --version")
+                case "MAC_OS":
+                    subprocess.call(f"{command} --version")
+                case "LINUX":
+                    subprocess.call(f"{command} --version")
+        except FileNotFoundError:
+            return False
+        return True
+
+
+def open_relevant_pager(op_sys: OperatingSystem, file_path: str) -> None:    
     match op_sys.name:
         case "WINDOWS":
-            os.system(f"less {file_path}")
+            try:
+                os.system(f"less {file_path}")
+            except FileNotFoundError:
+                os.system(f"more {file_path}")
         case "MAC_OS":
             subprocess.call(["less", file_path])
         case "LINUX":

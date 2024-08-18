@@ -11,7 +11,8 @@ from .helpers import (
     get_all_ignored_paths,
     format_path_for_gudignore,
     get_file_mode,
-    open_relevant_pager
+    open_relevant_pager,
+    see_if_command_exists
 )
 from .classes import (
     Blob,
@@ -457,4 +458,10 @@ def status(invocation, print_output=True) -> dict:
 
 def log(invocation):
     op_sys = invocation.os
+    less_exists = see_if_command_exists(op_sys, "less")
+    if less_exists:
+        print(f"Gud logs are about to open...\nTo scroll, use the arrow keys. To exit, press q.")
+    else:
+        print(f"Gud logs are about to open...\nTo scroll down, use the spacebar. To exit, press q.")
+    questionary.press_any_key_to_continue().ask()
     open_relevant_pager(op_sys, "notes.txt")
