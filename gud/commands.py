@@ -457,9 +457,7 @@ def status(invocation, print_output=True) -> dict:
 
 
 def log(invocation):
-    op_sys = invocation.os
     less_exists = see_if_command_exists("less")
-    print(less_exists)
     if less_exists:
         print(f"Gud logs are about to open...\nTo scroll, use the arrow keys. To exit, press q.")
     else:
