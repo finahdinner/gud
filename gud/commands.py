@@ -459,9 +459,6 @@ def status(invocation, print_output=True) -> dict:
 
 
 def log(invocation):
-    # TODO - recurse back through all commits, decoding the contents of each
-    # store the relevant info in something like a list of dictionaries
-
     # get the HEAD commit
     head_commit_hash = invocation.repo.head
     if not head_commit_hash:
@@ -523,3 +520,7 @@ def log(invocation):
     questionary.press_any_key_to_continue().ask()
     open_relevant_pager(invocation.os, pager, log_file_name)
     os.remove(log_file_name) # delete temp file
+
+
+def checkout(invocation):
+    ...
