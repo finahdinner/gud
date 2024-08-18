@@ -1,10 +1,8 @@
 import argparse
 import sys
 import os
-from .classes import CommandInvocation, PathValidatorArgparse
+from .classes import CommandInvocation
 from .commands import (
-    test,
-    hello,
     init,
     config,
     ignoring,
@@ -39,7 +37,7 @@ ignoring_subparser = subparsers.add_parser('ignoring', help="View which files Gu
 stage_subparser = subparsers.add_parser('stage', help="Add or remove file(s) to or from the staging area")
 add_or_remove = stage_subparser.add_argument('add_or_remove', nargs="?", choices=["add", "remove"], help="Add or remove from the staging area")
 # file_names is a list of zero or more files
-file_paths = stage_subparser.add_argument("file_paths", nargs="*", action=PathValidatorArgparse, help="A specified file or directory to add/remove to/from the staging area")
+file_paths = stage_subparser.add_argument("file_paths", nargs="*", help="A specified file or directory to add/remove to/from the staging area")
 
 commit_subparser = subparsers.add_parser('commit', help="Commit staged files to the repository's history")
 
@@ -58,9 +56,6 @@ branch_or_hash = checkout_subparser.add_mutually_exclusive_group(required=False)
 branch_or_hash.add_argument("--branch", help="Choose a branch to checkout to")
 branch_or_hash.add_argument("--hash", help="Choose a commit hash to checkout to")
 
-# TODO - remove this once testing is over
-test_command_subparser = subparsers.add_parser('test', help="Use this command for all your testing needs")
-
 
 def main():
     
@@ -69,11 +64,6 @@ def main():
     invocation = CommandInvocation(all_args, cwd)
 
     match invocation.command:
-        # TODO - remove test command eventually
-        case "test":
-            test(invocation)
-        case "hello":
-            hello(invocation)
         case "init":
             init(invocation)
         case "config":

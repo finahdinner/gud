@@ -21,32 +21,14 @@ from .classes import (
     Commit,
     Branch,
     PathValidatorQuestionary,
-    TextValidatorQuestionaryNotEmpty
+    TextValidatorQuestionaryNotEmpty,
+    get_indexed_file_paths_that_may_not_exist
 )
 import os
 import sys
 import tempfile
 from copy import deepcopy
 from pathlib import Path
-
-
-def test(invocation):
-    print("This is a test command!")
-    tree = Tree(invocation.repo)
-    tree_content_readable = tree.get_content("b480ff3304752e7c0fca6efe19a06e5e6d3fffd5").decode()
-    for line in tree_content_readable.split("\n"):
-        print(line)
-    tree_content_readable_2 = tree.get_content("4e6ae3bed9d1cba90a642020f7a17146731cae01").decode()
-    for line in tree_content_readable_2.split("\n"):
-        print(line)
-    
-
-def hello(invocation):
-    name = invocation.args.get("name")
-    if name:
-        print(f"Hello {name}!")
-    else:
-        print("Hello there.")
 
 
 def init(invocation):
@@ -235,6 +217,9 @@ def stage(invocation):
 
     print(f"{index=}")
 
+    # for when you are adding a "deleted" file to the staging area
+    file_paths_that_may_not_exist = get_indexed_file_paths_that_may_not_exist()
+
     if action == "add":
         # this should only contain files now, not directories
         ignored_abs_paths = ignoring(invocation, for_printing_to_user=False)
@@ -250,8 +235,11 @@ def stage(invocation):
         for rel_path in rel_paths_specified:
             # handle if a file which was deleted, was added to the staging area
             if not os.path.exists(rel_path):
-                del index[rel_path]
-                continue
+                if rel_path in file_paths_that_may_not_exist:
+                    del index[rel_path]
+                    continue
+                else:
+                    sys.exit(f"{rel_path} does not exist")
             abs_path = os.path.join(invocation.repo.root, rel_path)
             blob = Blob(repo=invocation.repo)
             file_hash = blob.serialise(abs_path, write_to_file=True)
@@ -328,6 +316,9 @@ def status(invocation, print_output=True) -> dict:
     unstaged_added
     """
     tree = Tree(invocation.repo)
+
+
+
     staged_index = tree.index
 
     """ Determine STAGED file differences (where index =/ last commit) """
@@ -789,7 +780,7 @@ def checkout(invocation):
         try:
             os.rmdir(parent_dir)
         except OSError as e:
-            print(e)
+            pass
 
     # create files
     for file, info_dict in files_to_create.items():
@@ -814,8 +805,11 @@ def checkout(invocation):
 
     # if checking out the head of a branch, clear the detached HEAD file
     if specific_hash == invocation.repo.get_head(specific_branch):
+        # set the branch and remove detached_head
+        detached_head_file_path = os.path.join(invocation.repo.path, "DETACHED_HEAD")
         with open(detached_head_file_path, "w", encoding="utf-8") as f:
             pass
+        invocation.repo.set_branch(specific_branch)
         # if previously detached on a branch and then switching back to its HEAD
         if specific_hash == invocation.repo.head:
             sys.exit(f"Returned to the HEAD of {invocation.repo.branch}.")

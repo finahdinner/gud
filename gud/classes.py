@@ -646,7 +646,7 @@ class PathValidatorQuestionary(Validator):
         The path must either be blank, in which case the user can 'complete' their selection
         or it must exist as a file path 
         """
-        _additional_paths = get_indexed_file_paths_that_may_not_exist()
+        _additional_paths = get_indexed_file_paths_that_may_not_exist() # this is very inefficient
         path = os.path.expanduser(document.text.strip()) # expanduser converts ~ to /home/<username>
         if (path == "/") or (path != "" and not os.path.exists(path) and path not in _additional_paths):
             raise ValidationError(
@@ -661,16 +661,3 @@ class TextValidatorQuestionaryNotEmpty(Validator):
             raise ValidationError(
                 message="You cannot leave this blank"
             )
-
-
-class PathValidatorArgparse(argparse.Action):
-    # these are for including the index files in the validator
-    def __call__(self, parser, namespace, paths, option_string=None):
-        paths_not_valid = []
-        for file_path in paths:
-            if not os.path.exists(file_path):
-                paths_not_valid.append(file_path)
-        if paths_not_valid:
-            error_msg = f"The following paths are not valid:\n{', '.join(paths_not_valid)}"
-            sys.exit(error_msg)
-        setattr(namespace, self.dest, paths)
