@@ -537,9 +537,9 @@ def branch(invocation):
     """
     TODO - allow the user to create or view branches
     """
-    if invocation.args.view_or_create_or_rename_or_rename == "view":
-        view_or_create_or_rename_or_rename = "view"
-    elif invocation.args.view_or_create_or_rename == "create":
+    if invocation.args["view_or_create_or_rename"] == "view":
+        view_or_create_or_rename = "view"
+    elif invocation.args["view_or_create_or_rename"] == "create":
         view_or_create_or_rename = "create"
     else:
         view_or_create_or_rename = questionary.select(
@@ -547,27 +547,26 @@ def branch(invocation):
             ["View", "Create"]
         ).ask().lower().strip()
 
-    # TODO - get a list of all branches (from .gud/heads/)
-    # indicate which is the active one
-    all_branches = {}
+    branch = Branch(invocation.repo)
+    all_branches_info = branch.get_all_branches_info()
 
     if view_or_create_or_rename == "view":
-        # TODO - print out all the branches, one by one, and have a * next to the active one
-        ...
+        for branch_name in sorted(all_branches_info.keys()):
+            prefix = ""
+            if branch_name == invocation.repo.branch:
+                prefix = "* " # indicate active branch
+            print(f"{prefix}{branch_name}")
 
     elif view_or_create_or_rename == "create":
         while True:
-            new_branch_name = questionary.select(
-                "Enter a name for your branch:",
-                ["View", "Create"]
-            ).ask().strip()
-            if not is_valid_branch_name(new_branch_name):
-                print("The branch name must contain only letters, numbers, dashes or underscores.")
-            if new_branch_name in all_branches.keys():
-                print(f"{new_branch_name} already exists as a branch. Please choose another name.")
-            else:
+            new_branch_name = questionary.text("Enter a name for your branch:").ask().strip()
+            is_valid_name = is_valid_branch_name(new_branch_name)
+            if is_valid_name and new_branch_name not in all_branches_info.keys():
                 break
-        branch = Branch(invocation.repo)
+            if not is_valid_name:
+                print("The branch name must contain only letters, numbers, dashes or underscores.")
+            if new_branch_name in all_branches_info.keys():
+                print(f"{new_branch_name} already exists as a branch. Please choose another name.")
         branch.create_branch(new_branch_name)
         print(f"Branch {new_branch_name} created.")
 
@@ -575,7 +574,7 @@ def branch(invocation):
         # TODO - questionary.select a branch from all branches, and prompt for a new name
         selected_branch = questionary.select(
             "Select a branch to rename:",
-            list(all_branches.keys())
+            list(all_branches_info.keys())
         ).ask()
         while True:
             new_branch_name = questionary.select(
@@ -584,7 +583,7 @@ def branch(invocation):
             ).ask().strip()
             if not is_valid_branch_name(new_branch_name):
                 print("The new branch name must contain only letters, numbers, dashes or underscores.")
-            all_branches_except_selected = set(all_branches.keys()) - set(selected_branch)
+            all_branches_except_selected = set(all_branches_info.keys()) - set(selected_branch)
             if new_branch_name in all_branches_except_selected:
                 print(f"{new_branch_name} already exists as a branch. Please choose another name.")
             else:
@@ -592,7 +591,6 @@ def branch(invocation):
                     print(f"{selected_branch} renamed to {new_branch_name} (unchanged)")
                     return
                 break
-        branch = Branch(invocation.repo)
         branch.rename_branch(selected_branch, new_branch_name)
         print(f"Branch {selected_branch} renamed to {new_branch_name}.")
 
