@@ -535,24 +535,24 @@ def log(invocation, internal_use=False) -> list|None:
 
 def branch(invocation):
 
-    view_or_rename_or_create = invocation.args.get("view_or_rename_or_create")
-    if not view_or_rename_or_create:
-        view_or_rename_or_create = questionary.select(
+    view_or_rename_or_create_or_delete = invocation.args.get("view_or_rename_or_create_or_delete", None)
+    if not view_or_rename_or_create_or_delete:
+        view_or_rename_or_create_or_delete = questionary.select(
             "Would you like to view branches, rename a branch, or create a new branch?",
-            ["View", "Rename", "Create"]
+            ["View", "Rename", "Create", "Delete"]
         ).ask().lower().strip()
 
     branch = Branch(invocation.repo)
     all_branches_info = branch.get_all_branches_info()
 
     # produce a list of sorted branch names, with the current branch at the start
-    # used for view and rename
+    # used for view, rename and delete
     all_branch_names = list(all_branches_info)
     all_branch_names_sorted = sorted(all_branch_names)
     all_branch_names_sorted.remove(invocation.repo.branch)
     all_branch_names_sorted.insert(0, invocation.repo.branch)
 
-    if view_or_rename_or_create == "view":
+    if view_or_rename_or_create_or_delete == "view":
         print("-- All branches (* indicates current branch) --\n")
         for branch_name in all_branch_names_sorted:
             prefix = ""
@@ -560,14 +560,19 @@ def branch(invocation):
                 prefix = "* " # indicate active branch
             print(f"{prefix}{branch_name}")
 
-    elif view_or_rename_or_create == "rename":
+    elif view_or_rename_or_create_or_delete == "rename":
         selected_branch = questionary.select(
             "Select a branch to rename:",
             all_branch_names_sorted
         ).ask()
+        if not selected_branch:
+            return
         while True:
-            new_branch_name = questionary.text("Enter a name for your branch:").ask().strip()
-            all_branches_except_selected = {branch for branch in all_branches_info.keys() if branch != selected_branch}
+            new_branch_name = questionary.text("Enter a name for your branch:").ask()
+            if not new_branch_name:
+                return
+            new_branch_name = new_branch_name.strip()
+            all_branches_except_selected = {branch for branch in all_branch_names_sorted if branch != selected_branch}
             is_valid_name = is_valid_branch_name(new_branch_name)
             is_unique_name = new_branch_name not in all_branches_except_selected
             if is_valid_branch_name(new_branch_name) and is_unique_name:
@@ -579,9 +584,12 @@ def branch(invocation):
         branch.rename_branch(selected_branch, new_branch_name)
         print(f"Branch {selected_branch} renamed to {new_branch_name}{' (unchanged)' if new_branch_name == selected_branch else ''}")
 
-    elif view_or_rename_or_create == "create":
+    elif view_or_rename_or_create_or_delete == "create":
         while True:
-            new_branch_name = questionary.text("Enter a name for your branch:").ask().strip()
+            new_branch_name = questionary.text("Enter a name for your branch:").ask()
+            if not new_branch_name:
+                return
+            new_branch_name = new_branch_name.strip()
             is_valid_name = is_valid_branch_name(new_branch_name)
             if is_valid_name and new_branch_name not in all_branches_info.keys():
                 break
@@ -591,6 +599,23 @@ def branch(invocation):
                 print(f"{new_branch_name} already exists as a branch. Please choose another name.")
         branch.create_branch(new_branch_name)
         print(f"Branch {new_branch_name} created.")
+
+    elif view_or_rename_or_create_or_delete == "delete":
+        all_branches_except_current = [branch for branch in all_branch_names_sorted if branch != invocation.repo.branch]
+        if not all_branches_except_current:
+            print(f"You only have one branch ({invocation.repo.branch}), which you are currently on, so you cannot delete any branches.")
+            return
+        selected_branch = questionary.select(
+            "Select a branch to delete:",
+            all_branches_except_current
+        ).ask()
+        if selected_branch:
+            to_delete = questionary.confirm(f"Are you sure you wish to delete branch {selected_branch}? You cannot undo this.").ask()
+            if to_delete:
+                branch.delete_branch(selected_branch)
+                print(f"Branch {selected_branch} deleted.")
+            else:
+                print("Operation cancelled.")
 
 def checkout(invocation):
     """
