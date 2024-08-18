@@ -10,7 +10,8 @@ from .commands import (
     ignoring,
     stage,
     commit,
-    status
+    status,
+    log
 )
 
 
@@ -42,7 +43,8 @@ commit_subparser = subparsers.add_parser('commit', help="Commit staged files to 
 
 status_subparser = subparsers.add_parser('status', help="View all staged and unstaged files")
 
-# commit_subparser = subparsers.add_parser('config', help="Commit staged files to the repository's history")
+log_subparser = subparsers.add_parser('log', help="View the commit history")
+log_subparser.add_argument("verbose", nargs="?", choices=["verbose"], help="Show more information about each commit")
 
 # TODO - remove this once testing is over
 test_command_subparser = subparsers.add_parser('test', help="Use this command for all your testing needs")
@@ -72,6 +74,8 @@ def main():
             commit(invocation)
         case "status":
             status(invocation)
+        case "log":
+            log(invocation)
 
 
 if __name__ == "__main__":

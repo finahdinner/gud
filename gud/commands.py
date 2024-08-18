@@ -452,3 +452,7 @@ def status(invocation, print_output=True) -> dict:
         "staged": staged,
         "unstaged": unstaged
     }
+
+
+def log(invocation):
+    ...
