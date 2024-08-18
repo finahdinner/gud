@@ -513,7 +513,6 @@ class Branch:
 
     def get_branch_head(self, branch_name) -> str:
         branch_path = self._get_branch_path(branch_name)
-        print(f"{branch_path=}")
         with open(branch_path, "r", encoding="utf-8") as f:
             return f.read().strip()
 

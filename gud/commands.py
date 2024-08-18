@@ -708,6 +708,9 @@ def checkout(invocation):
     - if a file exists in the new index but not old index, it needs to be deleted
     """
 
+    if specific_hash == invocation.repo.head:
+        sys.exit("You are currently at this commit.")
+
     tree = Tree(invocation.repo)
     commit = Commit(invocation.repo)
     staged_index = tree.index
