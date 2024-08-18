@@ -403,8 +403,8 @@ class Tree(GudObject):
         # once all blobs have been processed from this tree, recurse into deeper trees
         for mode, type, hash, path in trees:
             tree_hash = hash
-            curr_path = os.path.join(curr_path, path)
-            self._read_tree_object(tree_hash, curr_path=curr_path, indexed_files=indexed_files)
+            subtree_path = os.path.join(curr_path, path)
+            self._read_tree_object(tree_hash, curr_path=subtree_path, indexed_files=indexed_files)
 
         return indexed_files
     
