@@ -626,18 +626,52 @@ def checkout(invocation):
     in descending chronological order. and let them select which hash.
     """
 
+    specific_branch = invocation.args.get("branch")
+    specific_hash = invocation.args.get("hash")
+
+    branch = Branch(invocation.repo)
+    all_branches_info = branch.get_all_branches_info()
+
+    # produce a list of sorted branch names, with the current branch at the start
+    all_branch_names = list(all_branches_info)
+    all_branch_names_sorted = sorted(all_branch_names)
+    all_branch_names_sorted.remove(invocation.repo.branch)
+    all_branch_names_sorted.insert(0, invocation.repo.branch)
+
+    if not specific_branch or specific_hash:
+        # TODO - ask for which branch
+        # then, for that branch, generate a log for it
+        # let the user specify which commit to checkout to (use questionary.select)
+        selected_branch = questionary.select(
+            "Select a branch to checkout to:",
+            all_branch_names_sorted
+        ).ask()
+
+
+        # specific_hash = something here
+
+
+    if specific_branch:
+        specific_hash = branch.get_branch_head(specific_branch)
+
+
+
+    # TODO - checkout to the hash directly, then return from this function
+    
+
+
     # TODO - when checking out a commit, the user should immediately be told that if they want
     # to make changes, they should use `gud branch create`, before they can make commits
 
-    if invocation.args.hash or invocation.args.branch:
-        if invocation.args.branch:
-            # TODO - query .gud/heads/ to find the branch, then get its commit_hash
-            ...
-        else:
-            commit_hash = invocation.args.hash
-        # TODO - checkout to the hash directly, then return from this function
+    # if invocation.args.hash or invocation.args.branch:
+    #     if invocation.args.branch:
+    #         # TODO - query .gud/heads/ to find the branch, then get its commit_hash
+    #         ...
+    #     else:
+    #         commit_hash = invocation.args.hash
+    #     # TODO - checkout to the hash directly, then return from this function
         
-    # else, follow what the doctstring specifies
+    # # else, follow what the doctstring specifies
 
-    all_commit_contents = log(invocation, internal_use=True)
-    print(all_commit_contents)
+    # all_commit_contents = log(invocation, internal_use=True)
+    # print(all_commit_contents)

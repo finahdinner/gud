@@ -495,13 +495,16 @@ class Branch:
             with open(_BRANCH_path, "w", encoding="utf-8") as f:
                 f.write(new_name)
 
+    def get_branch_head(self, branch_name) -> str:
+        branch_path = self._get_branch_path(branch_name)
+        with open(branch_path, "r", encoding="utf-8") as f:
+            return f.read().strip()
+
     def get_all_branches_info(self) -> dict:
         all_branches_info = {}
         all_names = os.listdir(self.heads_dir)
         for branch_name in all_names:
-            branch_path = self._get_branch_path(branch_name)
-            with open(branch_path, "r", encoding="utf-8") as f:
-                all_branches_info[branch_name] = f.read().strip() # store the commit hash
+            all_branches_info[branch_name] = self.get_branch_head(branch_name)
         return all_branches_info
 
     def _get_branch_path(self, branch_name) -> str:
