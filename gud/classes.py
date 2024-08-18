@@ -108,6 +108,11 @@ class Repository:
             _, branch_name = f.read().strip().split("ref: ")
             return branch_name
         
+    def set_branch(self, branch_name):
+        branch_ref_file_path = os.path.join(self.path, "BRANCH")
+        with open(branch_ref_file_path, "w", encoding="utf-8") as f:
+            f.write(f"ref: {branch_name}")
+        
     def get_current_detached_head(self) -> str|None:
         detached_head_file_path = os.path.join(self.path, "DETACHED_HEAD")
         with open(detached_head_file_path, "r", encoding="utf-8") as f:

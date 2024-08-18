@@ -181,8 +181,8 @@ def ignoring(invocation, for_printing_to_user=True) -> set:
 
 def stage(invocation):
 
-    if invocation.repo.detached_head:
-        sys.exit("Please create a branch with `gud branch create`, before staging files.")
+    # if invocation.repo.detached_head:
+    #     sys.exit("Please create a branch with `gud branch create`, before staging files.")
 
     action = invocation.args.get("add_or_remove", None)
     paths_specified = set(invocation.args.get("file_paths", []))
@@ -333,6 +333,9 @@ def status(invocation, print_output=True) -> dict:
     tree = Tree(invocation.repo)
     head_commit_hash = invocation.repo.detached_head or invocation.repo.head
     head_index = tree.get_index_of_commit(commit_obj=commit, commit_hash=head_commit_hash)
+
+    print(f"{head_commit_hash=}")
+    print(f"{head_index=}")
 
     # compare head_index to staged_index
     files_in_head_index = set(head_index)
@@ -627,6 +630,12 @@ def branch(invocation):
             if new_branch_name in all_branches_info.keys():
                 print(f"{new_branch_name} already exists as a branch. Please choose another name.")
         branch.create_branch(new_branch_name)
+        # IMPORTANT - if they are in a detached head state, it should immediately switch them to the branch
+        if invocation.repo.detached_head:
+            detached_head_file_path = os.path.join(invocation.repo.path, "DETACHED_HEAD")
+            with open(detached_head_file_path, "w", encoding="utf-8") as f:
+                pass
+            invocation.repo.set_branch(new_branch_name)          
         print(f"Branch {new_branch_name} created.")
 
     elif view_or_rename_or_create_or_delete == "delete":
@@ -716,7 +725,7 @@ def checkout(invocation):
     # if checking out to the HEAD of a branch, do not enter detached mode (and clear DETACHED_HEAD contents)
     if specific_hash == invocation.repo.get_head(specific_branch):
         with open(detached_head_file_path, "w", encoding="utf-8") as f:
-            f.write("")
+            pass
         if specific_hash == invocation.repo.head:
             sys.exit(f"Returned to the HEAD of {invocation.repo.branch}.")
         else:
@@ -798,4 +807,6 @@ def checkout(invocation):
     #         uncompressed_content = blob.deserialise_object(obj_hash=blob_hash, expected_type="blob")
     #         f.write(uncompressed_content)
 
-    print("Checkout complete - I think???")
+    print(f"Checked out at {specific_hash}, in a `detached HEAD` state.")
+    print("Please create a branch `gud branch create` if you wish to make changes.")
+    print(f"Use `gud checkout return` to return to the HEAD of your previous branch ({invocation.repo.head}).")
