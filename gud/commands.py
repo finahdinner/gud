@@ -602,6 +602,9 @@ def checkout(invocation):
     in descending chronological order. and let them select which hash.
     """
 
+    # TODO - when checking out a commit, the user should immediately be told that if they want
+    # to make changes, they should use `gud branch create`, before they can make commits
+
     if invocation.args.hash or invocation.args.branch:
         if invocation.args.branch:
             # TODO - query .gud/heads/ to find the branch, then get its commit_hash
