@@ -457,11 +457,55 @@ def status(invocation, print_output=True) -> dict:
 
 
 def log(invocation):
-    less_exists = see_if_command_exists("less")
-    if less_exists:
-        print(f"Gud logs are about to open...\nTo scroll, use the arrow keys. To exit, press q.")
-    else:
-        print(f"Gud logs are about to open...\nTo scroll down, use the spacebar. To exit, press q.")
-    pager = "less" if less_exists else "more"
-    questionary.press_any_key_to_continue().ask()
-    subprocess.call([pager, "notes.txt"])
+    # TODO - recurse back through all commits, decoding the contents of each
+    # store the relevant info in something like a list of dictionaries
+
+    # get the HEAD commit
+    head_commit_hash = invocation.repo.head
+    if not head_commit_hash:
+        sys.exit(f"Your current branch {invocation.repo.branch} does not have any commits, so there are not logs to show.")
+
+    commit = Commit(invocation.repo)
+    commit_content = commit.get_content(head_commit_hash).decode()
+
+    commit_has_parent = True
+    commit_hash = head_commit_hash
+    all_commit_contents = [] # left to right is most
+    while commit_has_parent:
+        curr_commit_content = {"hash": commit_hash}
+        commit_content = commit.get_content(commit_hash).decode()
+        for line in commit_content.split("\n"):
+            if not line.strip(): # empty line
+                continue
+            parts = line.split("\t")
+            if len(parts) == 1: # commit message
+                curr_commit_content["message"] = parts[0]
+            else:
+                # either a tree, parent or committer
+                key, value = parts
+                curr_commit_content[key] = value
+        # next commit hash
+        commit_hash = curr_commit_content.get("parent", None)
+        if commit_hash is None:
+            commit_has_parent = False
+        all_commit_contents.append(curr_commit_content)
+        
+
+    
+
+    # if not root_tree_hash:
+    #     raise Exception(f"Could not find tree_hash from commit {head_commit_hash}")
+    # # generate an "head_index" by recursively inspecting all the tree objects
+    # head_index = self._read_tree_object(root_tree_hash, curr_path="")
+
+
+    # less_exists = see_if_command_exists("less")
+    # if less_exists:
+    #     print(f"Gud logs are about to open...\nTo scroll, use the arrow keys. To exit, press q.")
+    # else:
+    #     print(f"Gud logs are about to open...\nTo scroll down, use the spacebar. To exit, press q.")
+    # pager = "less" if less_exists else "more"
+    # questionary.press_any_key_to_continue().ask()
+
+
+    # subprocess.call([pager, "notes.txt"])
