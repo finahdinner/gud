@@ -496,7 +496,6 @@ def log(invocation, internal_use=False, specified_branch=None) -> list|None:
                 sys.exit(f"Your current branch {invocation.repo.branch} does not have any commits, so there are not logs to show.")
             return []
 
-    print(f"{head_commit_hash=}")
     commit = Commit(invocation.repo)
     commit_content = commit.get_content(head_commit_hash).decode()
 
@@ -708,6 +707,7 @@ def checkout(invocation):
     - if a file exists in the new index but not old index, it needs to be deleted
     """
 
+    # do not change anything if they select their current HEAD to checkout to
     if specific_hash == invocation.repo.head:
         sys.exit("You are currently at this commit.")
 
@@ -720,13 +720,36 @@ def checkout(invocation):
     print(f"{staged_index=}", len(staged_index))
     print(f"{checked_out_index=}", len(checked_out_index))
 
-    # determine which files need creating/deleting/modifying, and create a backup (maybe) of them
-
     # abs paths so the modifications are easier
-    staged_index_abs = {os.path.join(invocation.repo.root, path): value for path, value in staged_index}
-    checked_out_index_abs = {os.path.join(invocation.repo.root, path): value for path, value in checked_out_index}
+    staged_index_abs = {os.path.join(invocation.repo.root, path): value for path, value in staged_index.items()}
+    checked_out_index_abs = {os.path.join(invocation.repo.root, path): value for path, value in checked_out_index.items()}
     print(f"{staged_index_abs=}", len(staged_index))
     print(f"{checked_out_index_abs=}", len(checked_out_index))
+
+    # determine which files need creating/deleting/modifying, and create a backup (maybe) of them
+    files_to_delete = set()
+    files_to_modify: dict[str, list] = {} # dict([type, mode, hash])
+    files_to_not_change = set()
+
+    for file_path, info_dict in staged_index_abs.items():
+        checked_out_version = checked_out_index_abs.get(file_path, None) # either [type, mode, hash] or None
+        if not checked_out_version:
+            files_to_delete.add(file_path)
+        else:
+            info_str_staged = "".join(str(x) for x in info_dict.values())
+            info_str_checked_out = "".join(str(x) for x in checked_out_version.values())
+            print(info_str_staged, info_str_checked_out)
+            if info_str_staged != info_str_checked_out:
+                files_to_modify[file_path] = checked_out_version # store the checked out version of the file's hash etc
+            else:
+                files_to_not_change.add(file_path)
+
+    # anything that exists in checked_out_index but not been seen yet
+    files_to_create = set(checked_out_index_abs.keys()) - files_to_delete - files_to_not_change - set(files_to_modify.keys())
+    print(f"{files_to_not_change=}")
+    print(f"{files_to_delete=}")
+    print(f"{files_to_create=}")
+    print(f"{files_to_modify=}")
 
 
     # change the 
