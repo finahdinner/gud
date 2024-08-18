@@ -19,12 +19,12 @@ from .classes import (
     Blob,
     Tree,
     Commit,
+    Branch,
     PathValidatorQuestionary,
     TextValidatorQuestionaryNotEmpty
 )
 import os
 import sys
-import subprocess
 import tempfile
 from copy import deepcopy
 
@@ -567,7 +567,9 @@ def branch(invocation):
                 print(f"{new_branch_name} already exists as a branch. Please choose another name.")
             else:
                 break
-        # TODO - create new branch
+        branch = Branch(invocation.repo)
+        branch.create_branch(new_branch_name)
+        print(f"Branch {new_branch_name} created.")
 
     elif view_or_create_or_rename == "rename":
         # TODO - questionary.select a branch from all branches, and prompt for a new name
@@ -590,8 +592,9 @@ def branch(invocation):
                     print(f"{selected_branch} renamed to {new_branch_name} (unchanged)")
                     return
                 break
-        # TODO - rename selected_branch to new_branch_name
-
+        branch = Branch(invocation.repo)
+        branch.rename_branch(selected_branch, new_branch_name)
+        print(f"Branch {selected_branch} renamed to {new_branch_name}.")
 
 def checkout(invocation):
     """

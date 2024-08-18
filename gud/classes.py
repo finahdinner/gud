@@ -466,6 +466,38 @@ class Commit(GudObject):
         return file_content   
         
 
+class Branch:
+    def __init__(self, repo: Repository):
+        self.repo = repo
+        self.heads_dir = os.path.join(self.repo.path, "heads")
+
+    def create_branch(self, branch_name):
+        new_branch_path = self._get_branch_path(branch_name)
+        if os.path.exists(new_branch_path):
+            raise FileExistsError("Branch already exists")
+        with open(new_branch_path, "w", encoding="utf-8") as f:
+            head_commit_hash = self.repo.head if self.repo.head else "" 
+            f.write(head_commit_hash)
+
+    def delete_branch(self, branch_name: str):
+        branch_path = self._get_branch_path(branch_name)
+        if branch_name == self.repo.branch:
+            raise Exception("You cannot delete a branch that you are currently on")
+        os.remove(branch_path)
+
+    def rename_branch(self, old_name: str, new_name: str):
+        existing_branch_path = self._get_branch_path(old_name)
+        new_branch_path = self._get_branch_path(new_name)
+        os.rename(existing_branch_path, new_branch_path)
+        # change the contents of the BRANCH file if currently on it
+        if self.repo.branch == old_name:
+            _BRANCH_path = os.path.join(self.repo.path, "BRANCH")
+            with open(_BRANCH_path, "w", encoding="utf-8") as f:
+                f.write(new_name)
+
+    def _get_branch_path(self, branch_name) -> str:
+        return os.path.join(self.heads_dir, branch_name)
+
 class RepoConfig:
     """
     Configuration options for a specific repository.
