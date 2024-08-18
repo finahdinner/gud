@@ -638,6 +638,7 @@ def get_indexed_file_paths_that_may_not_exist() -> list:
     additional_paths = list(set(staged_index.keys()) | set(head_index.keys()))
     return additional_paths
 
+
 class PathValidatorQuestionary(Validator):
     # these are for including the index files in the validator
     def validate(self, document):
@@ -660,6 +661,7 @@ class TextValidatorQuestionaryNotEmpty(Validator):
             raise ValidationError(
                 message="You cannot leave this blank"
             )
+
 
 class PathValidatorArgparse(argparse.Action):
     # these are for including the index files in the validator
