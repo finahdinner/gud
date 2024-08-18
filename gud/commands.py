@@ -23,6 +23,7 @@ from .classes import (
 import os
 import sys
 import subprocess
+import tempfile
 from copy import deepcopy
 
 
@@ -489,23 +490,35 @@ def log(invocation):
         if commit_hash is None:
             commit_has_parent = False
         all_commit_contents.append(curr_commit_content)
-        
-
     
+    # determine which program to run
+    less_exists = see_if_command_exists("less")
+    pager = "less" if less_exists else "more"
+    if pager == "less":
+        instructions_str = "To scroll, use the arrow keys. **To exit, press q.**"
+    else:
+        instructions_str = "To scroll down, use spacebar. **To exit, press q.**"
 
-    # if not root_tree_hash:
-    #     raise Exception(f"Could not find tree_hash from commit {head_commit_hash}")
-    # # generate an "head_index" by recursively inspecting all the tree objects
-    # head_index = self._read_tree_object(root_tree_hash, curr_path="")
+    short = invocation.args["short"]
+    with tempfile.NamedTemporaryFile(delete=False, mode="w", newline="") as temp_log_file:
+        temp_log_file.write(f"-- Gud commits (newest to oldest) --\n")
+        temp_log_file.write(f"-- {instructions_str} --\n\n\n")
+        if short:
+            for commit in all_commit_contents:
+                temp_log_file.write(
+                    f"{commit['hash'][:7]} -- {commit['message']}\n"
+                )
+        else:
+            for commit in all_commit_contents:
+                temp_log_file.write(
+                    f"Commit: {commit['hash']}\n"
+                    f"Committer: {commit['committer']}\n\n"
+                    f"  {commit['message']}\n\n"
+                )
+        temp_log_file.write("\n\n")
+        log_file_name = temp_log_file.name
 
-
-    # less_exists = see_if_command_exists("less")
-    # if less_exists:
-    #     print(f"Gud logs are about to open...\nTo scroll, use the arrow keys. To exit, press q.")
-    # else:
-    #     print(f"Gud logs are about to open...\nTo scroll down, use the spacebar. To exit, press q.")
-    # pager = "less" if less_exists else "more"
-    # questionary.press_any_key_to_continue().ask()
-
-
-    # subprocess.call([pager, "notes.txt"])
+    print(f"Gud logs are about to open...\n{instructions_str}")
+    questionary.press_any_key_to_continue().ask()
+    subprocess.call([pager, log_file_name]) # open log file
+    os.remove(log_file_name) # delete temp file
