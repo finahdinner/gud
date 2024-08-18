@@ -532,6 +532,10 @@ def log(invocation, internal_use=False) -> list|None:
     os.remove(log_file_name) # delete temp file
 
 
+def branch(invocation):
+    ...
+
+
 def checkout(invocation):
     """
     TODO - if the user specifies a specific hash/branch, checkout directly to that

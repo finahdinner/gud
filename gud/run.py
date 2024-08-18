@@ -12,6 +12,7 @@ from .commands import (
     commit,
     status,
     log,
+    branch,
     checkout
 )
 
@@ -47,11 +48,13 @@ status_subparser = subparsers.add_parser('status', help="View all staged and uns
 log_subparser = subparsers.add_parser('log', help="View the commit history")
 log_subparser.add_argument("short", nargs="?", choices=["short"], help="Show less information about each commit")
 
+branch_subparser = subparsers.add_parser('branch', help="View existing branches or create a new branch")
+# TODO - maybe add an optional argument for creating a branch with a name
+
 checkout_subparser = subparsers.add_parser('checkout', help="View a specific commit or branch")
 branch_or_hash = checkout_subparser.add_mutually_exclusive_group(required=False)
 branch_or_hash.add_argument("--branch", help="Choose a branch to checkout to")
 branch_or_hash.add_argument("--hash", help="Choose a commit hash to checkout to")
-
 
 # TODO - remove this once testing is over
 test_command_subparser = subparsers.add_parser('test', help="Use this command for all your testing needs")
@@ -84,6 +87,8 @@ def main():
             status(invocation)
         case "log":
             log(invocation)
+        case "branch":
+            branch(invocation)
         case "checkout":
             checkout(invocation)
 
