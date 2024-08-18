@@ -640,16 +640,14 @@ def get_indexed_file_paths_that_may_not_exist() -> list:
 
 class PathValidatorQuestionary(Validator):
     # these are for including the index files in the validator
-    _additional_paths = get_indexed_file_paths_that_may_not_exist()
-    print(f"{_additional_paths=}")
-
     def validate(self, document):
         """
         The path must either be blank, in which case the user can 'complete' their selection
         or it must exist as a file path 
         """
+        _additional_paths = get_indexed_file_paths_that_may_not_exist()
         path = os.path.expanduser(document.text.strip()) # expanduser converts ~ to /home/<username>
-        if (path == "/") or (path != "" and not os.path.exists(path) and path not in __class__._additional_paths):
+        if (path == "/") or (path != "" and not os.path.exists(path) and path not in _additional_paths):
             raise ValidationError(
                 message="Path is not valid"
             )
@@ -665,13 +663,10 @@ class TextValidatorQuestionaryNotEmpty(Validator):
 
 class PathValidatorArgparse(argparse.Action):
     # these are for including the index files in the validator
-    _additional_paths = get_indexed_file_paths_that_may_not_exist()
-    print(f"{_additional_paths=}")
-    
     def __call__(self, parser, namespace, paths, option_string=None):
         paths_not_valid = []
         for file_path in paths:
-            if not os.path.exists(file_path) and file_path not in __class__._additional_paths:
+            if not os.path.exists(file_path):
                 paths_not_valid.append(file_path)
         if paths_not_valid:
             error_msg = f"The following paths are not valid:\n{', '.join(paths_not_valid)}"

@@ -587,10 +587,14 @@ def branch(invocation):
     all_branch_names_sorted.insert(0, invocation.repo.branch)
 
     if view_or_rename_or_create_or_delete == "view":
+        detached_head_commit = invocation.repo.detached_head
+        print(f"{detached_head_commit=}")
         print("-- All branches (* indicates current branch) --\n")
+        if detached_head_commit:
+            print(f"* DETACHED_HEAD {detached_head_commit[7:]}")
         for branch_name in all_branch_names_sorted:
             prefix = ""
-            if branch_name == invocation.repo.branch:
+            if not detached_head_commit and branch_name == invocation.repo.branch:
                 prefix = "* " # indicate active branch
             print(f"{prefix}{branch_name}")
 
@@ -689,19 +693,19 @@ def checkout(invocation):
 
     # first, ensure they have a specific branch they want to checkout to
     if not specific_branch or specific_hash:
-        selected_branch = questionary.select(
+        specific_branch = questionary.select(
             "Select a branch to checkout to:",
             all_branch_names_sorted
         ).ask()
-        if not selected_branch:
+        if not specific_branch:
             return
 
     # now, ensure they select a specific hash they want to checkout to 
     if not specific_hash:
-        print(f"{selected_branch=}")
-        all_commit_contents = log(invocation, internal_use=True, specified_branch=selected_branch)
+        print(f"{specific_branch=}")
+        all_commit_contents = log(invocation, internal_use=True, specified_branch=specific_branch)
         if not all_commit_contents:
-            sys.exit(f"The specified branch ({selected_branch}) has no commits to checkout to.")
+            sys.exit(f"The specified branch ({specific_branch}) has no commits to checkout to.")
         all_commit_contents_readable = [f"{commit['hash']} -- {commit['message']}" for commit in all_commit_contents]
         specific_hash = questionary.select(
             "Select a specific commit to checkout to:",
@@ -726,14 +730,8 @@ def checkout(invocation):
     detached_head_file_path = os.path.join(invocation.repo.path, "DETACHED_HEAD")
     # if checking out to the HEAD of a branch, do not enter detached mode (and clear DETACHED_HEAD contents)
     print(f"{specific_hash=}")
+    print(f"{specific_branch=}")
     print(f"{invocation.repo.get_head(specific_branch)=}")
-    if specific_hash == invocation.repo.get_head(specific_branch):
-        with open(detached_head_file_path, "w", encoding="utf-8") as f:
-            pass
-        if specific_hash == invocation.repo.head:
-            sys.exit(f"Returned to the HEAD of {invocation.repo.branch}.")
-        else:
-            sys.exit(f"Switched to branch {specific_branch}.")
 
     tree = Tree(invocation.repo)
     commit = Commit(invocation.repo)
@@ -781,36 +779,49 @@ def checkout(invocation):
     with open(detached_head_file_path, "w", encoding="utf-8") as f:
         f.write(specific_hash)
 
-    # # delete files
-    # for file in files_to_delete:
-    #     os.remove(file)
-    #     # this is a really bad implementation because it only up to one directory up
-    #     # TODO - fix this implementation so it deletes all folders all the way up
-    #     parent_dir = os.path.dirname(file)
-    #     # try to remove the parent directory if deleting files made it it empty
-    #     try:
-    #         os.rmdir(parent_dir)
-    #     except OSError as e:
-    #         print(e)
+    # delete files
+    for file in files_to_delete:
+        os.remove(file)
+        # this is a really bad implementation because it only up to one directory up
+        # TODO - fix this implementation so it deletes all folders all the way up
+        parent_dir = os.path.dirname(file)
+        # try to remove the parent directory if deleting files made it it empty
+        try:
+            os.rmdir(parent_dir)
+        except OSError as e:
+            print(e)
 
-    # # create files
-    # for file, info_dict in files_to_create.items():
-    #     # create directories if needed
-    #     os.makedirs(os.path.dirname(file), exist_ok=True)
-    #     with open(file, "wb") as f:
-    #         blob = Blob(invocation.repo)
-    #         blob_hash = info_dict["hash"]
-    #         uncompressed_content = blob.deserialise_object(obj_hash=blob_hash, expected_type="blob")
-    #         f.write(uncompressed_content)
+    # create files
+    for file, info_dict in files_to_create.items():
+        # create directories if needed
+        os.makedirs(os.path.dirname(file), exist_ok=True)
+        with open(file, "wb") as f:
+            blob = Blob(invocation.repo)
+            blob_hash = info_dict["hash"]
+            uncompressed_content = blob.deserialise_object(obj_hash=blob_hash, expected_type="blob")
+            f.write(uncompressed_content)
 
     # modify existing files
-    # for file, info_dict in files_to_modify.items():
-    #     with open(file, "wb") as f:
-    #         blob = Blob(invocation.repo)
-    #         blob_hash = info_dict["hash"]
-    #         uncompressed_content = blob.deserialise_object(obj_hash=blob_hash, expected_type="blob")
-    #         f.write(uncompressed_content)
+    for file, info_dict in files_to_modify.items():
+        with open(file, "wb") as f:
+            blob = Blob(invocation.repo)
+            blob_hash = info_dict["hash"]
+            uncompressed_content = blob.deserialise_object(obj_hash=blob_hash, expected_type="blob")
+            f.write(uncompressed_content)
 
-    print(f"Checked out at {specific_hash}, in a `detached HEAD` state.")
-    print("Please create a branch `gud branch create` if you wish to make changes.")
-    print(f"Use `gud checkout return` to return to the HEAD of your previous branch ({invocation.repo.head}).")
+    # update the current index so gud status etc doesn't go wild
+    invocation.repo.write_to_index(checked_out_index)
+
+    # if checking out the head of a branch, clear the detached HEAD file
+    if specific_hash == invocation.repo.get_head(specific_branch):
+        with open(detached_head_file_path, "w", encoding="utf-8") as f:
+            pass
+        # if previously detached on a branch and then switching back to its HEAD
+        if specific_hash == invocation.repo.head:
+            sys.exit(f"Returned to the HEAD of {invocation.repo.branch}.")
+        else:
+            sys.exit(f"Switched to branch {specific_branch}.")
+    else:
+        print(f"Checked out at {specific_hash}, in a `detached HEAD` state.")
+        print("Please create a branch `gud branch create` if you wish to make changes.")
+        print(f"Use `gud checkout return` to return to the HEAD of your previous branch ({invocation.repo.head}).")
