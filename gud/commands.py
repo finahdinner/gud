@@ -10,7 +10,8 @@ from .helpers import (
     get_default_file_from_package_installation,
     get_all_ignored_paths,
     format_path_for_gudignore,
-    get_file_mode
+    get_file_mode,
+    open_relevant_pager
 )
 from .classes import (
     Blob,
@@ -455,4 +456,5 @@ def status(invocation, print_output=True) -> dict:
 
 
 def log(invocation):
-    ...
+    op_sys = invocation.os
+    open_relevant_pager(op_sys, "notes.txt")
