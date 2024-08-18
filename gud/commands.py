@@ -27,6 +27,7 @@ import os
 import sys
 import tempfile
 from copy import deepcopy
+from pathlib import Path
 
 
 def test(invocation):
@@ -212,6 +213,7 @@ def stage(invocation):
 
     # convert all paths to rel_paths - this is how they will be stored in the index
     rel_paths_specified = [os.path.relpath(path, invocation.repo.root) for path in paths_specified]
+    abs_paths_specified = [os.path.join(invocation.repo.root, path) for path in rel_paths_specified]
 
     # "expand" directories into their specific files
     for rel_path in rel_paths_specified:
@@ -221,11 +223,15 @@ def stage(invocation):
                 rel_file_path = os.path.join(rel_path, file)
                 rel_paths_specified.append(rel_file_path)
 
+    # prevent users from staging the .gud directory, or anything within it
+    repo_path_obj = Path(invocation.repo.path)
+    if any(Path(path).is_relative_to(repo_path_obj) for path in abs_paths_specified):
+        sys.exit("You cannot add anything in the `.gud` directory into the staging area!")
+
     index = invocation.repo.parse_index()
 
     if action == "add":
         # this should only contain files now, not directories
-        abs_paths_specified = [os.path.join(invocation.repo.root, path) for path in rel_paths_specified]
         ignored_abs_paths = ignoring(invocation, for_printing_to_user=False)
         for abs_path in abs_paths_specified:
             for ignored_path in ignored_abs_paths:
@@ -674,8 +680,8 @@ def checkout(invocation):
     TODO - the exciting part!
     now we have a specific_hash that we want to checkout to
     this involves reverting the working directory to the state it was in at the commit
-    - parse the current index
-    - parse the index at the commit hash
+    - parse the current index - done
+    - parse the index at the commit hash - done
     - then, find the differences between these indexes
     - for all files that exist in both indexes, revert them back to the older state
     - if a file exists in the old index but not new index, it needs to be recreated
