@@ -163,9 +163,6 @@ def ignoring(invocation, for_printing_to_user=True) -> set:
 
 def stage(invocation):
 
-    # if invocation.repo.detached_head:
-    #     sys.exit("Please create a branch with `gud branch create`, before staging files.")
-
     action = invocation.args.get("add_or_remove", None)
     paths_specified = set(invocation.args.get("file_paths", []))
 
@@ -214,8 +211,6 @@ def stage(invocation):
         sys.exit("You cannot add anything in the `.gud` directory into the staging area!")
 
     index = invocation.repo.parse_index()
-
-    print(f"{index=}")
 
     # for when you are adding a "deleted" file to the staging area
     file_paths_that_may_not_exist = get_indexed_file_paths_that_may_not_exist()
@@ -316,9 +311,6 @@ def status(invocation, print_output=True) -> dict:
     unstaged_added
     """
     tree = Tree(invocation.repo)
-
-
-
     staged_index = tree.index
 
     """ Determine STAGED file differences (where index =/ last commit) """
@@ -326,9 +318,6 @@ def status(invocation, print_output=True) -> dict:
     tree = Tree(invocation.repo)
     head_commit_hash = invocation.repo.detached_head or invocation.repo.head
     head_index = tree.get_index_of_commit(commit_obj=commit, commit_hash=head_commit_hash)
-
-    print(f"{staged_index=}")
-    print(f"{head_index=}")
 
     # compare head_index to staged_index
     files_in_head_index = set(head_index)
@@ -535,7 +524,7 @@ def log(invocation, internal_use=False, specified_branch=None) -> list|None:
 
     short = invocation.args["short"]
     with tempfile.NamedTemporaryFile(delete=False, mode="w", newline="") as temp_log_file:
-        temp_log_file.write(f"\n-- Gud commits (newest to oldest) --\n")
+        temp_log_file.write(f"\n-- Gud commits on branch {invocation.repo.get_effective_branch_name()} (newest to oldest) --\n")
         temp_log_file.write(f"-- {instructions_str} --\n\n\n")
         if short:
             for commit in all_commit_contents:
@@ -579,7 +568,6 @@ def branch(invocation):
 
     if view_or_rename_or_create_or_delete == "view":
         detached_head_commit = invocation.repo.detached_head
-        print(f"{detached_head_commit=}")
         print("-- All branches (* indicates current branch) --\n")
         if detached_head_commit:
             print(f"* DETACHED_HEAD {detached_head_commit[7:]}")
@@ -653,13 +641,6 @@ def branch(invocation):
                 print("Operation cancelled.")
 
 def checkout(invocation):
-    """
-    TODO - if the user specifies a specific hash/branch, checkout directly to that
-    otherwise
-    1) ask them (questionary.select) which branch they wish to checkout to
-    2) call gut log and create a questionary.select with all the commit hashes,
-    in descending chronological order. and let them select which hash.
-    """
     # ensure there are no staged files, otherwise shouldnt be able to checkout
     file_changes = status(invocation, print_output=False)
     num_files_staged: int = file_changes["num_staged"]
@@ -693,51 +674,33 @@ def checkout(invocation):
 
     # now, ensure they select a specific hash they want to checkout to 
     if not specific_hash:
-        print(f"{specific_branch=}")
         all_commit_contents = log(invocation, internal_use=True, specified_branch=specific_branch)
         if not all_commit_contents:
             sys.exit(f"The specified branch ({specific_branch}) has no commits to checkout to.")
         all_commit_contents_readable = [f"{commit['hash']} -- {commit['message']}" for commit in all_commit_contents]
+        # labels the top commit as (HEAD)
+        all_commit_contents_readable_with_head_labeled = ["(HEAD) " + all_commit_contents_readable[0]] + all_commit_contents_readable[1:]
         specific_hash = questionary.select(
             "Select a specific commit to checkout to:",
-            all_commit_contents_readable
+            all_commit_contents_readable_with_head_labeled
         ).ask()
         if not specific_hash:
             return
-        specific_hash = specific_hash.split()[0].strip() # remove the `-- <commit_message>` bit
+        # remove the `-- <commit_message>` bit and (HEAD), if it's there
+        specific_hash = specific_hash.replace("(HEAD) ", "").split()[0].strip()
 
-    """
-    TODO - the exciting part!
-    now we have a specific_hash that we want to checkout to
-    this involves reverting the working directory to the state it was in at the commit
-    - parse the current index - done
-    - parse the index at the commit hash - done
-    - then, find the differences between these indexes
-    - for all files that exist in both indexes, revert them back to the older state
-    - if a file exists in the old index but not new index, it needs to be recreated
-    - if a file exists in the new index but not old index, it needs to be deleted
-    """
+    """ modifying files and switching branches """
 
     detached_head_file_path = os.path.join(invocation.repo.path, "DETACHED_HEAD")
-    # if checking out to the HEAD of a branch, do not enter detached mode (and clear DETACHED_HEAD contents)
-    print(f"{specific_hash=}")
-    print(f"{specific_branch=}")
-    print(f"{invocation.repo.get_head(specific_branch)=}")
 
     tree = Tree(invocation.repo)
     commit = Commit(invocation.repo)
     staged_index = tree.index
     checked_out_index = tree.get_index_of_commit(commit_obj=commit, commit_hash=specific_hash)
-    # FOR TESTING
-    print(f"{specific_hash=}")
-    print(f"{staged_index=}", len(staged_index))
-    print(f"{checked_out_index=}", len(checked_out_index))
 
     # abs paths so the modifications are easier
     staged_index_abs = {os.path.join(invocation.repo.root, path): value for path, value in staged_index.items()}
     checked_out_index_abs = {os.path.join(invocation.repo.root, path): value for path, value in checked_out_index.items()}
-    print(f"{staged_index_abs=}", len(staged_index))
-    print(f"{checked_out_index_abs=}", len(checked_out_index))
 
     # determine which files need creating/deleting/modifying, and create a backup (maybe) of them
     files_to_delete = set()
@@ -751,7 +714,6 @@ def checkout(invocation):
         else:
             info_str_staged = "".join(str(x) for x in info_dict.values())
             info_str_checked_out = "".join(str(x) for x in checked_out_version.values())
-            print(info_str_staged, info_str_checked_out)
             if info_str_staged != info_str_checked_out:
                 files_to_modify[file_path] = checked_out_version # store the checked out version of the file's hash etc
             else:
@@ -759,12 +721,7 @@ def checkout(invocation):
 
     # anything that exists in checked_out_index but not been seen yet
     file_paths_to_create = set(checked_out_index_abs.keys()) - files_to_delete - files_to_not_change - set(files_to_modify.keys())
-    print(f"{file_paths_to_create=}")
     files_to_create = {file_path: checked_out_index_abs[file_path] for file_path in file_paths_to_create}
-    print(f"{files_to_not_change=}")
-    print(f"{files_to_delete=}")
-    print(f"{files_to_create=}")
-    print(f"{files_to_modify=}")
 
     # change the value of DETACHED_HEAD
     with open(detached_head_file_path, "w", encoding="utf-8") as f:
@@ -816,6 +773,5 @@ def checkout(invocation):
         else:
             sys.exit(f"Switched to branch {specific_branch}.")
     else:
-        print(f"Checked out at {specific_hash}, in a `detached HEAD` state.")
+        print(f"Checked out at {specific_hash[:7]}, in a `detached HEAD` state.")
         print("Please create a branch `gud branch create` if you wish to make changes.")
-        print(f"Use `gud checkout return` to return to the HEAD of your previous branch ({invocation.repo.head}).")

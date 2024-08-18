@@ -120,6 +120,11 @@ class Repository:
             if not detached_commit_hash:
                 return None
             return detached_commit_hash
+        
+    def get_effective_branch_name(self) -> str|None:
+        if self.detached_head:
+            return f"DETACHED_{self.detached_head[:7]}"
+        return self.branch
 
     def get_head(self, other_branch_name=None) -> str|None:
         """
@@ -133,20 +138,6 @@ class Repository:
             if not head_commit_hash:
                 return None
             return head_commit_hash
-
-    def find_commit(self, hash):
-        # TODO - consider if I even need this function. could I not just use Commit.deserialise()?
-        dir_name, file_name = hash[:2], hash[2:]
-        objects_dir_path = os.path.join(self.path, "objects/")
-        commit_dir = os.path.join(objects_dir_path, dir_name)
-        if not os.path.exists(commit_dir):
-            raise Exception(f"Commit starting with hash {hash} does not exist")
-        matching_objects = [os.path.join(commit_dir, file) for file in os.listdir(commit_dir) if file.startswith(hash)]
-        if not matching_objects:
-            raise Exception(f"Commit starting with hash {hash} does not exist")
-        if len(matching_objects) > 1:
-            raise Exception(f"Commit starting with hash {hash} is not unique. Please be more specific.")
-        # check if it's a commit (raise an error if it's a blob or tree)
 
     def resolve_working_config(self) -> ConfigParser:
         """
