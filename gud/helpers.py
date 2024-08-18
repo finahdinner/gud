@@ -40,38 +40,19 @@ def is_valid_email(email) -> bool:
 def open_relevant_editor(op_sys: OperatingSystem, file_path: str) -> None:
     match op_sys.name:
         case "WINDOWS":
-            os.system(f"notepad {file_path}")
+            subprocess.call(f"notepad {file_path}")
         case "MAC_OS":
             subprocess.call(["open", "-e", file_path])
         case "LINUX":
             subprocess.call(["nano", file_path])
 
 
-def see_if_command_exists(op_sys: OperatingSystem, command: str):
-        try:
-            match op_sys.name:
-                case "WINDOWS":
-                    os.system(f"{command} --version")
-                case "MAC_OS":
-                    subprocess.call(f"{command} --version")
-                case "LINUX":
-                    subprocess.call(f"{command} --version")
-        except FileNotFoundError:
-            return False
-        return True
-
-
-def open_relevant_pager(op_sys: OperatingSystem, file_path: str) -> None:    
-    match op_sys.name:
-        case "WINDOWS":
-            try:
-                os.system(f"less {file_path}")
-            except FileNotFoundError:
-                os.system(f"more {file_path}")
-        case "MAC_OS":
-            subprocess.call(["less", file_path])
-        case "LINUX":
-            subprocess.call(["less", file_path])
+def see_if_command_exists(command: str):
+    try:
+        result = subprocess.run([command, "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except FileNotFoundError:
+        return False
+    return result.returncode == 0
 
 
 def get_default_file_from_package_installation(file_name) -> None|str:
