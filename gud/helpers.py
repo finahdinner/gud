@@ -40,7 +40,7 @@ def is_valid_email(email) -> bool:
 def open_relevant_editor(op_sys: OperatingSystem, file_path: str) -> None:
     match op_sys.name:
         case "WINDOWS":
-            os.system(f"notepad {file_path}", check=True)
+            os.system(f"notepad {file_path}")
         case "MAC_OS":
             subprocess.run(["open", "-e", file_path], check=True)
         case "LINUX":

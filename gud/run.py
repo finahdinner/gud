@@ -49,8 +49,8 @@ log_subparser.add_argument("short", nargs="?", choices=["short"], help="Show les
 
 checkout_subparser = subparsers.add_parser('checkout', help="View a specific commit or branch")
 branch_or_hash = checkout_subparser.add_mutually_exclusive_group(required=False)
-branch_or_hash.add_argument("-b", "--branch", help="Choose a branch to checkout to")
-branch_or_hash.add_argument("-h", "--hash", help="Choose a commit hash to checkout to")
+branch_or_hash.add_argument("--branch", help="Choose a branch to checkout to")
+branch_or_hash.add_argument("--hash", help="Choose a commit hash to checkout to")
 
 
 # TODO - remove this once testing is over
