@@ -628,6 +628,12 @@ def checkout(invocation):
     2) call gut log and create a questionary.select with all the commit hashes,
     in descending chronological order. and let them select which hash.
     """
+    # ensure there are no staged files, otherwise shouldnt be able to checkout
+    file_changes = status(invocation, print_output=False)
+    print(file_changes)
+    num_files_staged: int = file_changes["num_staged"]
+    if num_files_staged > 0:
+        sys.exit("You have unsaved changes staged. Please either commit them or remove them (`gud stage remove`) from the staging area.")
 
     specific_branch = invocation.args.get("branch")
     specific_hash = invocation.args.get("hash")
@@ -643,9 +649,6 @@ def checkout(invocation):
 
     # first, ensure they have a specific branch they want to checkout to
     if not specific_branch or specific_hash:
-        # TODO - ask for which branch
-        # then, for that branch, generate a log for it
-        # let the user specify which commit to checkout to (use questionary.select)
         selected_branch = questionary.select(
             "Select a branch to checkout to:",
             all_branch_names_sorted
@@ -677,3 +680,6 @@ def checkout(invocation):
     - if a file exists in the old index but not new index, it needs to be recreated
     - if a file exists in the new index but not old index, it needs to be deleted
     """
+
+    # current_tree = Tree(invocation.repo)
+    # staged_index = current_tree
