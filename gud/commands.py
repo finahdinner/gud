@@ -661,13 +661,14 @@ def checkout(invocation):
         all_commit_contents = log(invocation, internal_use=True, specified_branch=selected_branch)
         if not all_commit_contents:
             sys.exit(f"The specified branch ({selected_branch}) has no commits to checkout to.")
-        all_commit_contents_readable = [f"{commit['hash'][:7]} -- {commit['message']}" for commit in all_commit_contents]
-        specified_hash = questionary.select(
+        all_commit_contents_readable = [f"{commit['hash']} -- {commit['message']}" for commit in all_commit_contents]
+        specific_hash = questionary.select(
             "Select a specific commit to checkout to:",
             all_commit_contents_readable
         ).ask()
-        if not specified_hash:
+        if not specific_hash:
             return
+        specific_hash = specific_hash.split()[0].strip() # remove the `-- <commit_message>` bit
 
     """
     TODO - the exciting part!
@@ -681,6 +682,12 @@ def checkout(invocation):
     - if a file exists in the new index but not old index, it needs to be deleted
     """
 
-    # tree = Tree(invocation.repo)
-    # staged_index = tree.index
-    
+    tree = Tree(invocation.repo)
+    commit = Commit(invocation.repo)
+    staged_index = tree.index
+    checked_out_index = tree.get_index_of_commit(commit_obj=commit, commit_hash=specific_hash)
+    # FOR TESTING
+    print(f"{staged_index=}", len(staged_index))
+    print(f"{specific_hash=}")
+    print(f"{checked_out_index=}", len(checked_out_index))
+
