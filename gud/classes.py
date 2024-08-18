@@ -97,15 +97,27 @@ class Repository:
         with open(index_path, "w", encoding="utf-8") as f:
             pass
 
-    def get_current_branch(self) -> str:
+    def get_current_branch(self) -> str|None:
+        detached_head_hash = self._get_current_detached_head()
+        if detached_head_hash:
+            return None # indicates the user is not at the head of a branch
         branch_ref_file_path = os.path.join(self.path, "BRANCH")
         with open(branch_ref_file_path, "r", encoding="utf-8") as f:
+            return f.read().strip()
+        
+    def _get_current_detached_head(self) -> str:
+        detached_head_file_path = os.path.join(self.path, "BRANCH")
+        with open(detached_head_file_path, "r", encoding="utf-8") as f:
             return f.read().strip()
 
     def get_head(self, other_branch_name=None) -> str|None:
         """
         other_branch_name allows this function to look for the head of other branches
         """
+        # check if on a detatched head (checked out to a specific commit)
+        
+
+
         branch_name = other_branch_name if other_branch_name else self.branch
         branch_commit_file_path = os.path.join(self.path, "heads", branch_name)
         with open(branch_commit_file_path, "r", encoding="utf-8") as f:

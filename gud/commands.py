@@ -697,3 +697,6 @@ def checkout(invocation):
     print(f"{specific_hash=}")
     print(f"{checked_out_index=}", len(checked_out_index))
 
+    # determine which files need creating/deleting/modifying, and create a backup (maybe) of them
+
+    # change the 
