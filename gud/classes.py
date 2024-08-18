@@ -482,7 +482,20 @@ class Commit(GudObject):
         Serialised/stored data -> usable/readable data
         """
         file_content = super().deserialise_object(commit_hash, expected_type="commit")
-        return file_content   
+        return file_content
+    
+    def get_parent_hash(self, commit_hash) -> str|None:
+        commit_content = super().deserialise_object(commit_hash, expected_type="commit").decode()
+        for line in commit_content.split("\n"):
+            if not line.strip(): # empty line
+                continue
+            parts = line.split("\t")
+            if len(parts) == 2:
+                # either a tree, parent or committer
+                key, value = parts
+                if key == "parent":
+                    return value
+        return None
         
 
 class Branch:
@@ -614,11 +627,21 @@ class GlobalConfig:
                 f.write(new_config_options)
 
 
+def get_indexed_file_paths_that_may_not_exist() -> list:
+    """ my dumb way of "fixing" the file paths that don't exist when validating """
+    repo = Repository(cwd=os.getcwd())
+    staged_index = repo.parse_index()
+    commit = Commit(repo)
+    curr_head = repo.head
+    tree = Tree(repo)
+    head_index = tree.get_index_of_commit(commit, curr_head)
+    additional_paths = list(set(staged_index.keys()) | set(head_index.keys()))
+    return additional_paths
+
 class PathValidatorQuestionary(Validator):
     # these are for including the index files in the validator
-    _repo = Repository(cwd=os.getcwd())
-    _index = _repo.parse_index()
-    _additional_paths = list(_index.keys())
+    _additional_paths = get_indexed_file_paths_that_may_not_exist()
+    print(f"{_additional_paths=}")
 
     def validate(self, document):
         """
@@ -642,9 +665,8 @@ class TextValidatorQuestionaryNotEmpty(Validator):
 
 class PathValidatorArgparse(argparse.Action):
     # these are for including the index files in the validator
-    _repo = Repository(cwd=os.getcwd())
-    _index = _repo.parse_index()
-    _additional_paths = list(_index.keys())
+    _additional_paths = get_indexed_file_paths_that_may_not_exist()
+    print(f"{_additional_paths=}")
     
     def __call__(self, parser, namespace, paths, option_string=None):
         paths_not_valid = []

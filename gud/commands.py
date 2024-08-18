@@ -233,6 +233,8 @@ def stage(invocation):
 
     index = invocation.repo.parse_index()
 
+    print(f"{index=}")
+
     if action == "add":
         # this should only contain files now, not directories
         ignored_abs_paths = ignoring(invocation, for_printing_to_user=False)
@@ -334,7 +336,7 @@ def status(invocation, print_output=True) -> dict:
     head_commit_hash = invocation.repo.detached_head or invocation.repo.head
     head_index = tree.get_index_of_commit(commit_obj=commit, commit_hash=head_commit_hash)
 
-    print(f"{head_commit_hash=}")
+    print(f"{staged_index=}")
     print(f"{head_index=}")
 
     # compare head_index to staged_index
@@ -723,6 +725,8 @@ def checkout(invocation):
 
     detached_head_file_path = os.path.join(invocation.repo.path, "DETACHED_HEAD")
     # if checking out to the HEAD of a branch, do not enter detached mode (and clear DETACHED_HEAD contents)
+    print(f"{specific_hash=}")
+    print(f"{invocation.repo.get_head(specific_branch)=}")
     if specific_hash == invocation.repo.get_head(specific_branch):
         with open(detached_head_file_path, "w", encoding="utf-8") as f:
             pass
