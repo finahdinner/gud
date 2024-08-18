@@ -534,30 +534,52 @@ def log(invocation, internal_use=False) -> list|None:
 
 
 def branch(invocation):
-    """
-    TODO - allow the user to create or view branches
-    """
-    if invocation.args["view_or_create_or_rename"] == "view":
-        view_or_create_or_rename = "view"
-    elif invocation.args["view_or_create_or_rename"] == "create":
-        view_or_create_or_rename = "create"
-    else:
-        view_or_create_or_rename = questionary.select(
-            "Would you like to view branches, or create a new branch?",
-            ["View", "Create"]
+
+    view_or_rename_or_create = invocation.args.get("view_or_rename_or_create")
+    if not view_or_rename_or_create:
+        view_or_rename_or_create = questionary.select(
+            "Would you like to view branches, rename a branch, or create a new branch?",
+            ["View", "Rename", "Create"]
         ).ask().lower().strip()
 
     branch = Branch(invocation.repo)
     all_branches_info = branch.get_all_branches_info()
 
-    if view_or_create_or_rename == "view":
-        for branch_name in sorted(all_branches_info.keys()):
+    # produce a list of sorted branch names, with the current branch at the start
+    # used for view and rename
+    all_branch_names = list(all_branches_info)
+    all_branch_names_sorted = sorted(all_branch_names)
+    all_branch_names_sorted.remove(invocation.repo.branch)
+    all_branch_names_sorted.insert(0, invocation.repo.branch)
+
+    if view_or_rename_or_create == "view":
+        print("-- All branches (* indicates current branch) --\n")
+        for branch_name in all_branch_names_sorted:
             prefix = ""
             if branch_name == invocation.repo.branch:
                 prefix = "* " # indicate active branch
             print(f"{prefix}{branch_name}")
 
-    elif view_or_create_or_rename == "create":
+    elif view_or_rename_or_create == "rename":
+        selected_branch = questionary.select(
+            "Select a branch to rename:",
+            all_branch_names_sorted
+        ).ask()
+        while True:
+            new_branch_name = questionary.text("Enter a name for your branch:").ask().strip()
+            all_branches_except_selected = {branch for branch in all_branches_info.keys() if branch != selected_branch}
+            is_valid_name = is_valid_branch_name(new_branch_name)
+            is_unique_name = new_branch_name not in all_branches_except_selected
+            if is_valid_branch_name(new_branch_name) and is_unique_name:
+                break
+            if not is_valid_name:
+                print("The new branch name must contain only letters, numbers, dashes or underscores.")
+            if not is_unique_name:
+                print(f"{new_branch_name} already exists as a branch. Please choose another name.")
+        branch.rename_branch(selected_branch, new_branch_name)
+        print(f"Branch {selected_branch} renamed to {new_branch_name}{' (unchanged)' if new_branch_name == selected_branch else ''}")
+
+    elif view_or_rename_or_create == "create":
         while True:
             new_branch_name = questionary.text("Enter a name for your branch:").ask().strip()
             is_valid_name = is_valid_branch_name(new_branch_name)
@@ -569,30 +591,6 @@ def branch(invocation):
                 print(f"{new_branch_name} already exists as a branch. Please choose another name.")
         branch.create_branch(new_branch_name)
         print(f"Branch {new_branch_name} created.")
-
-    elif view_or_create_or_rename == "rename":
-        # TODO - questionary.select a branch from all branches, and prompt for a new name
-        selected_branch = questionary.select(
-            "Select a branch to rename:",
-            list(all_branches_info.keys())
-        ).ask()
-        while True:
-            new_branch_name = questionary.select(
-                "Enter a name for your branch:",
-                ["View", "Create"]
-            ).ask().strip()
-            if not is_valid_branch_name(new_branch_name):
-                print("The new branch name must contain only letters, numbers, dashes or underscores.")
-            all_branches_except_selected = set(all_branches_info.keys()) - set(selected_branch)
-            if new_branch_name in all_branches_except_selected:
-                print(f"{new_branch_name} already exists as a branch. Please choose another name.")
-            else:
-                if new_branch_name == selected_branch: # same name as before
-                    print(f"{selected_branch} renamed to {new_branch_name} (unchanged)")
-                    return
-                break
-        branch.rename_branch(selected_branch, new_branch_name)
-        print(f"Branch {selected_branch} renamed to {new_branch_name}.")
 
 def checkout(invocation):
     """

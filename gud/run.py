@@ -49,8 +49,8 @@ log_subparser = subparsers.add_parser('log', help="View the commit history")
 log_subparser.add_argument("short", nargs="?", choices=["short"], help="Show less information about each commit")
 
 branch_subparser = subparsers.add_parser('branch', help="View existing branches, rename a branch or create a new branch")
-view_or_create_or_rename = branch_subparser.add_argument(
-    'view_or_create_or_rename', nargs="?", choices=["view", "create", "rename"], help="Choose to view, create or rename a branch"
+view_or_rename_or_create = branch_subparser.add_argument(
+    'view_or_rename_or_create', nargs="?", choices=["view", "rename", "create"], help="Choose to view, rename or create a branch"
 )
 
 checkout_subparser = subparsers.add_parser('checkout', help="View a specific commit or branch")
