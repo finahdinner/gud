@@ -520,5 +520,5 @@ def log(invocation):
 
     print(f"Gud logs are about to open...\n{instructions_str}")
     questionary.press_any_key_to_continue().ask()
-    subprocess.call([pager, log_file_name]) # open log file
+    subprocess.run([pager, log_file_name], check=True) # open log file
     os.remove(log_file_name) # delete temp file
