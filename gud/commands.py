@@ -443,7 +443,7 @@ def status(invocation, print_output=True) -> dict:
     if print_output:
         
         if invocation.repo.detached_head:
-            print(f"Currently checked out at commit {invocation.repo.detached_head[:7]}")
+            print(f"** Currently checked out at commit {invocation.repo.detached_head[:7]} **")
         else:
             print(f"On branch {invocation.repo.branch}\n")
 
@@ -712,9 +712,15 @@ def checkout(invocation):
     - if a file exists in the new index but not old index, it needs to be deleted
     """
 
-    # do not change anything if they select their current HEAD to checkout to
-    if specific_hash == invocation.repo.head:
-        sys.exit("You are currently at this commit.")
+    detached_head_file_path = os.path.join(invocation.repo.path, "DETACHED_HEAD")
+    # if checking out to the HEAD of a branch, do not enter detached mode (and clear DETACHED_HEAD contents)
+    if specific_hash == invocation.repo.get_head(specific_branch):
+        with open(detached_head_file_path, "w", encoding="utf-8") as f:
+            f.write("")
+        if specific_hash == invocation.repo.head:
+            sys.exit(f"Returned to the HEAD of {invocation.repo.branch}.")
+        else:
+            sys.exit(f"Switched to branch {specific_branch}.")
 
     tree = Tree(invocation.repo)
     commit = Commit(invocation.repo)
@@ -733,7 +739,7 @@ def checkout(invocation):
 
     # determine which files need creating/deleting/modifying, and create a backup (maybe) of them
     files_to_delete = set()
-    files_to_modify: dict[str, list] = {} # dict([type, mode, hash])
+    files_to_modify: dict[str, dict] = {} # dict([type, mode, hash])
     files_to_not_change = set()
 
     for file_path, info_dict in staged_index_abs.items():
@@ -752,18 +758,17 @@ def checkout(invocation):
     # anything that exists in checked_out_index but not been seen yet
     file_paths_to_create = set(checked_out_index_abs.keys()) - files_to_delete - files_to_not_change - set(files_to_modify.keys())
     print(f"{file_paths_to_create=}")
-    files_to_create = {staged_index_abs[file_path] for file_path in file_paths_to_create}
+    files_to_create = {file_path: checked_out_index_abs[file_path] for file_path in file_paths_to_create}
     print(f"{files_to_not_change=}")
     print(f"{files_to_delete=}")
     print(f"{files_to_create=}")
     print(f"{files_to_modify=}")
 
     # change the value of DETACHED_HEAD
-    # detached_head_file_path = os.path.join(invocation.repo.path, "DETACHED_HEAD")
-    # with open(detached_head_file_path, "w", encoding="utf-8") as f:
-    #     f.write(specific_hash)
+    with open(detached_head_file_path, "w", encoding="utf-8") as f:
+        f.write(specific_hash)
 
-    # # now, change all the files (exciting!!)
+    # # delete files
     # for file in files_to_delete:
     #     os.remove(file)
     #     # this is a really bad implementation because it only up to one directory up
@@ -775,8 +780,22 @@ def checkout(invocation):
     #     except OSError as e:
     #         print(e)
 
-    # for file in files_to_create:
+    # # create files
+    # for file, info_dict in files_to_create.items():
     #     # create directories if needed
     #     os.makedirs(os.path.dirname(file), exist_ok=True)
-    #     with open(file, "w", encoding="utf-8") as f:
-    #         ...
+    #     with open(file, "wb") as f:
+    #         blob = Blob(invocation.repo)
+    #         blob_hash = info_dict["hash"]
+    #         uncompressed_content = blob.deserialise_object(obj_hash=blob_hash, expected_type="blob")
+    #         f.write(uncompressed_content)
+
+    # modify existing files
+    # for file, info_dict in files_to_modify.items():
+    #     with open(file, "wb") as f:
+    #         blob = Blob(invocation.repo)
+    #         blob_hash = info_dict["hash"]
+    #         uncompressed_content = blob.deserialise_object(obj_hash=blob_hash, expected_type="blob")
+    #         f.write(uncompressed_content)
+
+    print("Checkout complete - I think???")
