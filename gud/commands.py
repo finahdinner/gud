@@ -250,7 +250,7 @@ def stage(invocation):
     elif action == "remove":
         commit = Commit(invocation.repo)
         tree = Tree(invocation.repo)
-        head_index = tree.get_head_index(commit_obj=commit)
+        head_index = tree.get_index_of_commit(commit_obj=commit, commit_hash=invocation.repo.head)
         # revert the file(s) to their previous version, if it exists, else remove entirely from the index
         for rel_path in rel_paths_specified:
             previous_version_of_file = head_index.get(rel_path, None)
@@ -313,7 +313,7 @@ def status(invocation, print_output=True) -> dict:
     """ Determine STAGED file differences (where index =/ last commit) """
     commit = Commit(invocation.repo)
     tree = Tree(invocation.repo)
-    head_index = tree.get_head_index(commit_obj=commit)
+    head_index = tree.get_index_of_commit(commit_obj=commit, commit_hash=invocation.repo.head)
 
     # compare head_index to staged_index
     files_in_head_index = set(head_index)
@@ -681,5 +681,6 @@ def checkout(invocation):
     - if a file exists in the new index but not old index, it needs to be deleted
     """
 
-    # current_tree = Tree(invocation.repo)
-    # staged_index = current_tree
+    # tree = Tree(invocation.repo)
+    # staged_index = tree.index
+    
