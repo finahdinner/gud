@@ -610,13 +610,18 @@ class GlobalConfig:
 
 
 class PathValidatorQuestionary(Validator):
+    # these are for including the index files in the validator
+    _repo = Repository(cwd=os.getcwd())
+    _index = _repo.parse_index()
+    _additional_paths = list(_index.keys())
+
     def validate(self, document):
         """
         The path must either be blank, in which case the user can 'complete' their selection
         or it must exist as a file path 
         """
         path = os.path.expanduser(document.text.strip()) # expanduser converts ~ to /home/<username>
-        if (path == "/") or (path != "" and not os.path.exists(path)):
+        if (path == "/") or (path != "" and not os.path.exists(path) and path not in __class__._additional_paths):
             raise ValidationError(
                 message="Path is not valid"
             )
@@ -631,10 +636,15 @@ class TextValidatorQuestionaryNotEmpty(Validator):
             )
 
 class PathValidatorArgparse(argparse.Action):
+    # these are for including the index files in the validator
+    _repo = Repository(cwd=os.getcwd())
+    _index = _repo.parse_index()
+    _additional_paths = list(_index.keys())
+    
     def __call__(self, parser, namespace, paths, option_string=None):
         paths_not_valid = []
         for file_path in paths:
-            if not os.path.exists(file_path):
+            if not os.path.exists(file_path) and file_path not in __class__._additional_paths:
                 paths_not_valid.append(file_path)
         if paths_not_valid:
             error_msg = f"The following paths are not valid:\n{', '.join(paths_not_valid)}"

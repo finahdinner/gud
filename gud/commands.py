@@ -246,6 +246,10 @@ def stage(invocation):
                         sys.exit(f"{abs_path} is being ignored by Gud.\nPlease remove it from your `.gudignore` file(s) if you wish to stage it.")
 
         for rel_path in rel_paths_specified:
+            # handle if a file which was deleted, was added to the staging area
+            if not os.path.exists(rel_path):
+                del index[rel_path]
+                continue
             abs_path = os.path.join(invocation.repo.root, rel_path)
             blob = Blob(repo=invocation.repo)
             file_hash = blob.serialise(abs_path, write_to_file=True)
@@ -745,11 +749,33 @@ def checkout(invocation):
                 files_to_not_change.add(file_path)
 
     # anything that exists in checked_out_index but not been seen yet
-    files_to_create = set(checked_out_index_abs.keys()) - files_to_delete - files_to_not_change - set(files_to_modify.keys())
+    file_paths_to_create = set(checked_out_index_abs.keys()) - files_to_delete - files_to_not_change - set(files_to_modify.keys())
+    print(f"{file_paths_to_create=}")
+    files_to_create = {staged_index_abs[file_path] for file_path in file_paths_to_create}
     print(f"{files_to_not_change=}")
     print(f"{files_to_delete=}")
     print(f"{files_to_create=}")
     print(f"{files_to_modify=}")
 
+    # change the value of DETACHED_HEAD
+    # detached_head_file_path = os.path.join(invocation.repo.path, "DETACHED_HEAD")
+    # with open(detached_head_file_path, "w", encoding="utf-8") as f:
+    #     f.write(specific_hash)
 
-    # change the 
+    # # now, change all the files (exciting!!)
+    # for file in files_to_delete:
+    #     os.remove(file)
+    #     # this is a really bad implementation because it only up to one directory up
+    #     # TODO - fix this implementation so it deletes all folders all the way up
+    #     parent_dir = os.path.dirname(file)
+    #     # try to remove the parent directory if deleting files made it it empty
+    #     try:
+    #         os.rmdir(parent_dir)
+    #     except OSError as e:
+    #         print(e)
+
+    # for file in files_to_create:
+    #     # create directories if needed
+    #     os.makedirs(os.path.dirname(file), exist_ok=True)
+    #     with open(file, "w", encoding="utf-8") as f:
+    #         ...
