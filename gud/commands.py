@@ -641,6 +641,7 @@ def checkout(invocation):
     all_branch_names_sorted.remove(invocation.repo.branch)
     all_branch_names_sorted.insert(0, invocation.repo.branch)
 
+    # first, ensure they have a specific branch they want to checkout to
     if not specific_branch or specific_hash:
         # TODO - ask for which branch
         # then, for that branch, generate a log for it
@@ -651,6 +652,9 @@ def checkout(invocation):
         ).ask()
         if not selected_branch:
             return
+
+    # now, ensure they select a specific hash they want to checkout to 
+    if not specific_hash:
         all_commit_contents = log(invocation, internal_use=True, specified_branch=selected_branch)
         if not all_commit_contents:
             sys.exit(f"The specified branch ({selected_branch}) has no commits to checkout to.")
@@ -662,31 +666,14 @@ def checkout(invocation):
         if not specified_hash:
             return
 
-
-        # specific_hash = something here
-
-
-    # if specific_branch:
-    #     specific_hash = branch.get_branch_head(specific_branch)
-
-
-
-    # TODO - checkout to the hash directly, then return from this function
-    
-
-
-    # TODO - when checking out a commit, the user should immediately be told that if they want
-    # to make changes, they should use `gud branch create`, before they can make commits
-
-    # if invocation.args.hash or invocation.args.branch:
-    #     if invocation.args.branch:
-    #         # TODO - query .gud/heads/ to find the branch, then get its commit_hash
-    #         ...
-    #     else:
-    #         commit_hash = invocation.args.hash
-    #     # TODO - checkout to the hash directly, then return from this function
-        
-    # # else, follow what the doctstring specifies
-
-    # all_commit_contents = log(invocation, internal_use=True)
-    # print(all_commit_contents)
+    """
+    TODO - the exciting part!
+    now we have a specific_hash that we want to checkout to
+    this involves reverting the working directory to the state it was in at the commit
+    - parse the current index
+    - parse the index at the commit hash
+    - then, find the differences between these indexes
+    - for all files that exist in both indexes, revert them back to the older state
+    - if a file exists in the old index but not new index, it needs to be recreated
+    - if a file exists in the new index but not old index, it needs to be deleted
+    """
