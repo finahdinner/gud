@@ -11,7 +11,8 @@ from .helpers import (
     get_all_ignored_paths,
     format_path_for_gudignore,
     get_file_mode,
-    see_if_command_exists
+    see_if_command_exists,
+    open_relevant_pager
 )
 from .classes import (
     Blob,
@@ -497,11 +498,11 @@ def log(invocation):
     if pager == "less":
         instructions_str = "To scroll, use the arrow keys. **To exit, press q.**"
     else:
-        instructions_str = "To scroll down, use spacebar. **To exit, press q.**"
+        instructions_str = "If scrollable, use spacebar to scrolldown and **press Q to exit.**"
 
     short = invocation.args["short"]
     with tempfile.NamedTemporaryFile(delete=False, mode="w", newline="") as temp_log_file:
-        temp_log_file.write(f"-- Gud commits (newest to oldest) --\n")
+        temp_log_file.write(f"\n-- Gud commits (newest to oldest) --\n")
         temp_log_file.write(f"-- {instructions_str} --\n\n\n")
         if short:
             for commit in all_commit_contents:
@@ -520,5 +521,5 @@ def log(invocation):
 
     print(f"Gud logs are about to open...\n{instructions_str}")
     questionary.press_any_key_to_continue().ask()
-    subprocess.run([pager, log_file_name], check=True) # open log file
+    open_relevant_pager(invocation.os, pager, log_file_name)
     os.remove(log_file_name) # delete temp file

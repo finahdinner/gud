@@ -40,11 +40,19 @@ def is_valid_email(email) -> bool:
 def open_relevant_editor(op_sys: OperatingSystem, file_path: str) -> None:
     match op_sys.name:
         case "WINDOWS":
-            subprocess.run(f"notepad {file_path}", check=True)
+            os.system(f"notepad {file_path}", check=True)
         case "MAC_OS":
             subprocess.run(["open", "-e", file_path], check=True)
         case "LINUX":
             subprocess.run(["nano", file_path], check=True)
+
+
+def open_relevant_pager(op_sys: OperatingSystem, pager: str, file_path: str) -> None:
+    match op_sys.name:
+        case "WINDOWS":
+            os.system(f"{pager} {file_path}")
+        case _:
+             subprocess.run([pager, file_path], check=True) # open log file
 
 
 def see_if_command_exists(command: str):
