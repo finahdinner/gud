@@ -402,11 +402,12 @@ def status(invocation, print_output=True) -> dict:
                 next_lookup: str = prefix_parts[-1]
                 subtree = subtree.get(next_lookup, None)
                 file_path_so_far = os.path.join(*prefix_parts)
+                abs_file_path_so_far = os.path.join(invocation.repo.root, file_path_so_far)
                 if subtree is None: # untracked file/dir
                     # using untracked path like this ensures that it only lists the
                     # shallowest untracked directory, rather than listing the entire contents
                     # as untracked
-                    if os.path.isdir(file_path_so_far):
+                    if os.path.isdir(abs_file_path_so_far):
                         file_path_so_far += os.sep # trailing slash if dir - is clearer in the output
                     unstaged_added_files.add(file_path_so_far)
                     break
@@ -414,8 +415,8 @@ def status(invocation, print_output=True) -> dict:
                     old_mode = subtree[0]
                     old_hash = subtree[1]
                     blob = Blob(invocation.repo)
-                    new_mode = get_file_mode(file_path_so_far)
-                    new_hash = blob.serialise(file_path_so_far, write_to_file=False)
+                    new_mode = get_file_mode(abs_file_path_so_far)
+                    new_hash = blob.serialise(abs_file_path_so_far, write_to_file=False)
                     if old_mode != new_mode or old_hash != new_hash:
                         unstaged_modified_files.add(file_path_so_far)
                     break

@@ -93,6 +93,14 @@ def main():
         case "checkout":
             checkout(invocation)
 
+    # some commands break if the user isn't in the root directory - so this is a warning to them
+    if invocation.command != "init":
+        if cwd != invocation.repo.root:
+            cwd_parts, root_parts = cwd.split(os.sep), invocation.repo.root.split(os.sep)
+            dirs_difference = len(cwd_parts) - len(root_parts)
+            cd_helper_str = ".." + "/.." * (dirs_difference - 1)
+            print(f"You are not currently in the root of your repository.\nUse the command\ncd {cd_helper_str}\nto return to the root, before continuing.")
+
 
 if __name__ == "__main__":
     main()
