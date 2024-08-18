@@ -70,6 +70,7 @@ class Repository:
             self.config = self.resolve_working_config()
             self.branch = self.get_current_branch() # get the name of the branch
             self.head: str|None = self.get_head() # get the commit of the HEAD
+            self.detached_head: str|None = self.get_current_detached_head() # commit of detached head (if it exists)
 
     def create_repo(self) -> None:
         """
@@ -91,33 +92,35 @@ class Repository:
         # create BRANCH - this stores the current branch -- equivalent to git's HEAD
         head_path = os.path.join(self.path, "BRANCH")
         with open(head_path, "w", encoding="utf-8") as f:
-            f.write("main") # store the name of the branch it is pointing to
+            f.write("ref: main") # store the name of the branch it is pointing to
+        # create DETACHED_HEAD - this stores the current detached head (which may be none)
+        head_path = os.path.join(self.path, "DETACHED_HEAD")
+        with open(head_path, "w", encoding="utf-8") as f:
+            pass # initially empty
         # create index
         index_path = os.path.join(self.path, "index")
         with open(index_path, "w", encoding="utf-8") as f:
             pass
-
-    def get_current_branch(self) -> str|None:
-        detached_head_hash = self._get_current_detached_head()
-        if detached_head_hash:
-            return None # indicates the user is not at the head of a branch
+        
+    def get_current_branch(self) -> str:
         branch_ref_file_path = os.path.join(self.path, "BRANCH")
         with open(branch_ref_file_path, "r", encoding="utf-8") as f:
-            return f.read().strip()
+            _, branch_name = f.read().strip().split("ref: ")
+            return branch_name
         
-    def _get_current_detached_head(self) -> str:
-        detached_head_file_path = os.path.join(self.path, "BRANCH")
+    def get_current_detached_head(self) -> str|None:
+        detached_head_file_path = os.path.join(self.path, "DETACHED_HEAD")
         with open(detached_head_file_path, "r", encoding="utf-8") as f:
-            return f.read().strip()
+            detached_commit_hash = f.read().strip()
+            if not detached_commit_hash:
+                return None
+            return detached_commit_hash
 
     def get_head(self, other_branch_name=None) -> str|None:
         """
         other_branch_name allows this function to look for the head of other branches
         """
         # check if on a detatched head (checked out to a specific commit)
-        
-
-
         branch_name = other_branch_name if other_branch_name else self.branch
         branch_commit_file_path = os.path.join(self.path, "heads", branch_name)
         with open(branch_commit_file_path, "r", encoding="utf-8") as f:
@@ -488,7 +491,8 @@ class Branch:
             raise FileExistsError("Branch already exists")
         with open(new_branch_path, "w", encoding="utf-8") as f:
             # copy the current head's commit into the new branch
-            head_commit_hash = self.repo.head if self.repo.head else "" 
+            curr_head_hash = self.repo.detached_head or self.repo.head
+            head_commit_hash = curr_head_hash if curr_head_hash else "" 
             f.write(head_commit_hash)
 
     def delete_branch(self, branch_name: str):
@@ -505,10 +509,11 @@ class Branch:
         if self.repo.branch == old_name:
             _BRANCH_path = os.path.join(self.repo.path, "BRANCH")
             with open(_BRANCH_path, "w", encoding="utf-8") as f:
-                f.write(new_name)
+                f.write(f"ref: {new_name}")
 
     def get_branch_head(self, branch_name) -> str:
         branch_path = self._get_branch_path(branch_name)
+        print(f"{branch_path=}")
         with open(branch_path, "r", encoding="utf-8") as f:
             return f.read().strip()
 

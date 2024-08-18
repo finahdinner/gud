@@ -181,6 +181,9 @@ def ignoring(invocation, for_printing_to_user=True) -> set:
 
 def stage(invocation):
 
+    if invocation.repo.detached_head:
+        sys.exit("Please create a branch with `gud branch create`, before staging files.")
+
     action = invocation.args.get("add_or_remove", None)
     paths_specified = set(invocation.args.get("file_paths", []))
 
@@ -256,7 +259,9 @@ def stage(invocation):
     elif action == "remove":
         commit = Commit(invocation.repo)
         tree = Tree(invocation.repo)
-        head_index = tree.get_index_of_commit(commit_obj=commit, commit_hash=invocation.repo.head)
+        # prioritise detached head
+        head_commit_hash = invocation.repo.detached_head or invocation.repo.head
+        head_index = tree.get_index_of_commit(commit_obj=commit, commit_hash=head_commit_hash)
         # revert the file(s) to their previous version, if it exists, else remove entirely from the index
         for rel_path in rel_paths_specified:
             previous_version_of_file = head_index.get(rel_path, None)
@@ -275,6 +280,9 @@ def commit(invocation):
     num_files_staged: int = file_changes["num_staged"]
     if num_files_staged == 0:
         sys.exit("You cannot commit, as there are no changes in the staging area.")
+
+    if invocation.repo.detached_head: # this should ideally not be hit
+        sys.exit("Please create a branch with `gud branch create`, before committing files.")
 
     # create the tree object(s), using the current index
     tree = Tree(invocation.repo)
@@ -319,7 +327,8 @@ def status(invocation, print_output=True) -> dict:
     """ Determine STAGED file differences (where index =/ last commit) """
     commit = Commit(invocation.repo)
     tree = Tree(invocation.repo)
-    head_index = tree.get_index_of_commit(commit_obj=commit, commit_hash=invocation.repo.head)
+    head_commit_hash = invocation.repo.detached_head or invocation.repo.head
+    head_index = tree.get_index_of_commit(commit_obj=commit, commit_hash=head_commit_hash)
 
     # compare head_index to staged_index
     files_in_head_index = set(head_index)
@@ -427,6 +436,11 @@ def status(invocation, print_output=True) -> dict:
     }
 
     if print_output:
+        
+        if invocation.repo.detached_head:
+            print(f"Currently checked out at commit {invocation.repo.detached_head[:7]}")
+        else:
+            print(f"On branch {invocation.repo.branch}\n")
 
         # if both staged and unstaged are empty
         if not (any(staged.values()) or any(unstaged.values())):
@@ -475,12 +489,14 @@ def log(invocation, internal_use=False, specified_branch=None) -> list|None:
         branch = Branch(invocation.repo)
         head_commit_hash = branch.get_branch_head(specified_branch)
     else:
-        head_commit_hash = invocation.repo.head # default behaviour when a user calls gud log
+        # get the detached head if it exists
+        head_commit_hash = invocation.repo.detached_head or invocation.repo.head
         if not head_commit_hash:
             if not internal_use: # only show if the user invokes directly
                 sys.exit(f"Your current branch {invocation.repo.branch} does not have any commits, so there are not logs to show.")
             return []
 
+    print(f"{head_commit_hash=}")
     commit = Commit(invocation.repo)
     commit_content = commit.get_content(head_commit_hash).decode()
 
@@ -636,7 +652,6 @@ def checkout(invocation):
     """
     # ensure there are no staged files, otherwise shouldnt be able to checkout
     file_changes = status(invocation, print_output=False)
-    print(file_changes)
     num_files_staged: int = file_changes["num_staged"]
     if num_files_staged > 0:
         sys.exit("You have unsaved changes staged. Please either commit them or remove them (`gud stage remove`) from the staging area.")
@@ -646,9 +661,13 @@ def checkout(invocation):
 
     branch = Branch(invocation.repo)
     all_branches_info = branch.get_all_branches_info()
+    # do not include any branches without a HEAD (ie any branches with zero commits)
+    all_branches_info_filtered = {branch: info for branch, info in all_branches_info.items() if info}
+    if not all_branches_info_filtered:
+        sys.exit("Cannot checkout any branch, because no commits exist on any branch. Please commit something first!")
 
     # produce a list of sorted branch names, with the current branch at the start
-    all_branch_names = list(all_branches_info)
+    all_branch_names = list(all_branches_info_filtered)
     all_branch_names_sorted = sorted(all_branch_names)
     all_branch_names_sorted.remove(invocation.repo.branch)
     all_branch_names_sorted.insert(0, invocation.repo.branch)
@@ -664,6 +683,7 @@ def checkout(invocation):
 
     # now, ensure they select a specific hash they want to checkout to 
     if not specific_hash:
+        print(f"{selected_branch=}")
         all_commit_contents = log(invocation, internal_use=True, specified_branch=selected_branch)
         if not all_commit_contents:
             sys.exit(f"The specified branch ({selected_branch}) has no commits to checkout to.")
@@ -693,10 +713,17 @@ def checkout(invocation):
     staged_index = tree.index
     checked_out_index = tree.get_index_of_commit(commit_obj=commit, commit_hash=specific_hash)
     # FOR TESTING
-    print(f"{staged_index=}", len(staged_index))
     print(f"{specific_hash=}")
+    print(f"{staged_index=}", len(staged_index))
     print(f"{checked_out_index=}", len(checked_out_index))
 
     # determine which files need creating/deleting/modifying, and create a backup (maybe) of them
+
+    # abs paths so the modifications are easier
+    staged_index_abs = {os.path.join(invocation.repo.root, path): value for path, value in staged_index}
+    checked_out_index_abs = {os.path.join(invocation.repo.root, path): value for path, value in checked_out_index}
+    print(f"{staged_index_abs=}", len(staged_index))
+    print(f"{checked_out_index_abs=}", len(checked_out_index))
+
 
     # change the 
