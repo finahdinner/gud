@@ -476,6 +476,7 @@ class Branch:
         if os.path.exists(new_branch_path):
             raise FileExistsError("Branch already exists")
         with open(new_branch_path, "w", encoding="utf-8") as f:
+            # copy the current head's commit into the new branch
             head_commit_hash = self.repo.head if self.repo.head else "" 
             f.write(head_commit_hash)
 

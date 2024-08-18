@@ -459,18 +459,21 @@ def status(invocation, print_output=True) -> dict:
     }
 
 
-def log(invocation, internal_use=False) -> list|None:
+def log(invocation, internal_use=False, specified_branch=None) -> list|None:
     """
     internal_use -- represents whether this commnad was invoked within the code somewhere
     if this is the case, there need be no output to the terminal, just a return value
     """
-
     # get the HEAD commit
-    head_commit_hash = invocation.repo.head
-    if not head_commit_hash:
-        if not internal_use: # only show if the user invokes directly
-            sys.exit(f"Your current branch {invocation.repo.branch} does not have any commits, so there are not logs to show.")
-        return []
+    if specified_branch:
+        branch = Branch(invocation.repo)
+        head_commit_hash = branch.get_branch_head(specified_branch)
+    else:
+        head_commit_hash = invocation.repo.head # default behaviour when a user calls gud log
+        if not head_commit_hash:
+            if not internal_use: # only show if the user invokes directly
+                sys.exit(f"Your current branch {invocation.repo.branch} does not have any commits, so there are not logs to show.")
+            return []
 
     commit = Commit(invocation.repo)
     commit_content = commit.get_content(head_commit_hash).decode()
@@ -646,13 +649,25 @@ def checkout(invocation):
             "Select a branch to checkout to:",
             all_branch_names_sorted
         ).ask()
+        if not selected_branch:
+            return
+        all_commit_contents = log(invocation, internal_use=True, specified_branch=selected_branch)
+        if not all_commit_contents:
+            sys.exit(f"The specified branch ({selected_branch}) has no commits to checkout to.")
+        all_commit_contents_readable = [f"{commit['hash'][:7]} -- {commit['message']}" for commit in all_commit_contents]
+        specified_hash = questionary.select(
+            "Select a specific commit to checkout to:",
+            all_commit_contents_readable
+        ).ask()
+        if not specified_hash:
+            return
 
 
         # specific_hash = something here
 
 
-    if specific_branch:
-        specific_hash = branch.get_branch_head(specific_branch)
+    # if specific_branch:
+    #     specific_hash = branch.get_branch_head(specific_branch)
 
 
 
