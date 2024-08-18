@@ -6,6 +6,7 @@ from configparser import ConfigParser
 from .helpers import (
     is_valid_username,
     is_valid_email,
+    is_valid_branch_name,
     open_relevant_editor,
     get_default_file_from_package_installation,
     get_all_ignored_paths,
@@ -533,7 +534,63 @@ def log(invocation, internal_use=False) -> list|None:
 
 
 def branch(invocation):
-    ...
+    """
+    TODO - allow the user to create or view branches
+    """
+    if invocation.args.view_or_create_or_rename_or_rename == "view":
+        view_or_create_or_rename_or_rename = "view"
+    elif invocation.args.view_or_create_or_rename == "create":
+        view_or_create_or_rename = "create"
+    else:
+        view_or_create_or_rename = questionary.select(
+            "Would you like to view branches, or create a new branch?",
+            ["View", "Create"]
+        ).ask().lower().strip()
+
+    # TODO - get a list of all branches (from .gud/heads/)
+    # indicate which is the active one
+    all_branches = {}
+
+    if view_or_create_or_rename == "view":
+        # TODO - print out all the branches, one by one, and have a * next to the active one
+        ...
+
+    elif view_or_create_or_rename == "create":
+        while True:
+            new_branch_name = questionary.select(
+                "Enter a name for your branch:",
+                ["View", "Create"]
+            ).ask().strip()
+            if not is_valid_branch_name(new_branch_name):
+                print("The branch name must contain only letters, numbers, dashes or underscores.")
+            if new_branch_name in all_branches.keys():
+                print(f"{new_branch_name} already exists as a branch. Please choose another name.")
+            else:
+                break
+        # TODO - create new branch
+
+    elif view_or_create_or_rename == "rename":
+        # TODO - questionary.select a branch from all branches, and prompt for a new name
+        selected_branch = questionary.select(
+            "Select a branch to rename:",
+            list(all_branches.keys())
+        ).ask()
+        while True:
+            new_branch_name = questionary.select(
+                "Enter a name for your branch:",
+                ["View", "Create"]
+            ).ask().strip()
+            if not is_valid_branch_name(new_branch_name):
+                print("The new branch name must contain only letters, numbers, dashes or underscores.")
+            all_branches_except_selected = set(all_branches.keys()) - set(selected_branch)
+            if new_branch_name in all_branches_except_selected:
+                print(f"{new_branch_name} already exists as a branch. Please choose another name.")
+            else:
+                if new_branch_name == selected_branch: # same name as before
+                    print(f"{selected_branch} renamed to {new_branch_name} (unchanged)")
+                    return
+                break
+        # TODO - rename selected_branch to new_branch_name
 
 
 def checkout(invocation):

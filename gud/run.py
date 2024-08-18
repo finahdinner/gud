@@ -48,8 +48,10 @@ status_subparser = subparsers.add_parser('status', help="View all staged and uns
 log_subparser = subparsers.add_parser('log', help="View the commit history")
 log_subparser.add_argument("short", nargs="?", choices=["short"], help="Show less information about each commit")
 
-branch_subparser = subparsers.add_parser('branch', help="View existing branches or create a new branch")
-# TODO - maybe add an optional argument for creating a branch with a name
+branch_subparser = subparsers.add_parser('branch', help="View existing branches, rename a branch or create a new branch")
+view_or_create_or_rename = branch_subparser.add_argument(
+    'view_or_create_or_rename', nargs="?", choices=["view", "create", "rename"], help="Choose to view, create or rename a branch"
+)
 
 checkout_subparser = subparsers.add_parser('checkout', help="View a specific commit or branch")
 branch_or_hash = checkout_subparser.add_mutually_exclusive_group(required=False)

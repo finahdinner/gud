@@ -37,6 +37,17 @@ def is_valid_email(email) -> bool:
     return results is not None
 
 
+def is_valid_branch_name(branch_name) -> bool:
+    """
+    Basic check to return if a branch name is valid
+    - no whitespace
+    - only alphanum
+    """
+    regex_pattern = r"^[\w-]{1,40}$"
+    results = re.search(regex_pattern, branch_name)
+    return results is not None
+
+
 def open_relevant_editor(op_sys: OperatingSystem, file_path: str) -> None:
     match op_sys.name:
         case "WINDOWS":
