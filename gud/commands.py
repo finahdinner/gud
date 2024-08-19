@@ -687,7 +687,7 @@ def checkout(invocation):
     all_branch_names_sorted.insert(0, invocation.repo.branch)
 
     # first, ensure they have a specific branch they want to checkout to
-    if not specific_branch or specific_hash:
+    if not specific_branch and not specific_hash:
         specific_branch = questionary.select(
             "Select a branch to checkout to:",
             all_branch_names_sorted
