@@ -3,6 +3,7 @@ import sys
 import os
 from .classes import CommandInvocation
 from .commands import (
+    hello,
     init,
     config,
     ignoring,
@@ -21,6 +22,8 @@ parser = argparse.ArgumentParser(
 )
 subparsers = parser.add_subparsers(title="commands", dest="command")
 subparsers.required = True
+
+hello_subparser = subparsers.add_parser("hello", help="Hello!")
 
 init_subparser = subparsers.add_parser('init', help='Initialise repository')
 init_subparser.add_argument("is_default", nargs="?", choices=["default"], help="Skip the interactive prompt and use default values")
@@ -60,6 +63,11 @@ file_path = restore_subparser.add_argument("file_path", nargs=1, help="A specifi
 def main():
     
     all_args = parser.parse_args(sys.argv[1:])
+
+    if all_args.command == "hello":
+        hello()
+        return
+
     cwd = os.getcwd()
     invocation = CommandInvocation(all_args, cwd)
 

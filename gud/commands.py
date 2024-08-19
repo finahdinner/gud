@@ -31,6 +31,10 @@ from copy import deepcopy
 from pathlib import Path
 
 
+def hello():
+    print("Hello! Gud is up and running on your computer!")
+
+
 def init(invocation):
 
     global_config = invocation.repo.global_config.get_config()
