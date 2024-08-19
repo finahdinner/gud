@@ -14,7 +14,7 @@ A recreation of the core functionality of [Git](https://git-scm.com/), designed 
     - `pip --version` (or `pip3 --version`)
     - Ensure that neither of the above commands returns an error
 4. Make sure you are not in a virtual environment in your terminal (you likely are not, but type in `deactivate` just to make sure), then run the command:
-    - `pip install "git+https://github.com/finahdinner/gud.git`
+    - `pip install "git+https://github.com/finahdinner/gud.git"`
 5. Close your terminal and open it in your project directory
 6. Run `gud hello` to confirm that Gud is installed!
     
