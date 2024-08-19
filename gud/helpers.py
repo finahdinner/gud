@@ -154,4 +154,4 @@ def print_red(text):
 
 
 def print_green(text):
-    print(colored(text, "red"))
+    print(colored(text, "green"))
