@@ -16,7 +16,7 @@ from .helpers import (
     open_relevant_pager,
     print_red,
     print_green,
-    print_orange
+    print_light_grey
 )
 from .classes import (
     Blob,
@@ -787,7 +787,7 @@ def checkout(invocation):
             sys.exit(f"Switched to branch {specific_branch}.")
     else:
         print(f"Checked out at {specific_hash[:7]}, in a `detached HEAD` state.")
-        print_orange("Please create a branch `gud branch create` if you wish to make changes.")
+        print_light_grey("Please create a branch `gud branch create` if you wish to make changes.")
 
 
 def restore(invocation):
