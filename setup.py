@@ -1,10 +1,11 @@
 from setuptools import setup, find_packages
 
+# for PyPi
 with open("README.md", "r", encoding="utf-8") as f:
     description = f.read()
 
 setup(
-    name="gud_finahdinner",
+    name="gud_vcs",
     version="0.1",
     packages=find_packages(),
     install_requires=[
