@@ -15,7 +15,8 @@ from .helpers import (
     see_if_command_exists,
     open_relevant_pager,
     print_red,
-    print_green
+    print_green,
+    print_orange
 )
 from .classes import (
     Blob,
@@ -34,7 +35,7 @@ from pathlib import Path
 
 
 def hello():
-    print("Hello! Gud is up and running on your computer!")
+    print_green("Hello! Gud is up and running on your computer!")
 
 
 def init(invocation):
@@ -110,7 +111,7 @@ def init(invocation):
         invocation.repo.create_repo()
         invocation.repo.repo_config.set_config(repo_config)
 
-    print(f"Initialised Gud repository in {invocation.repo.path}")
+    print_green(f"Initialised Gud repository in {invocation.repo.path}")
 
 
 def config(invocation):
@@ -193,7 +194,7 @@ def stage(invocation):
             # check if the path exists within the repository
             abs_path = os.path.abspath(os.path.expanduser(path)) # expanduser expands the ~
             if os.path.commonprefix([abs_path, invocation.repo.root]) != invocation.repo.root:
-                print(f"Path {path} does not exist within the repository, so cannot be {connective} the staging area")
+                print_red(f"Path {path} does not exist within the repository, so cannot be {connective} the staging area")
                 continue
             paths_specified.add(abs_path) # store the rel path
             print(f"Files/directories to be {connective} the staging area:")
@@ -302,7 +303,7 @@ def commit(invocation):
     with open(heads_path, "w", encoding="utf-8") as f:
         f.write(commit_hash)
 
-    print(f"Successfully committed {num_files_staged} file{'s' if num_files_staged > 1 else ''} on branch {invocation.repo.branch}.\nUse `gud log` to view commit history.")
+    print_green(f"Successfully committed {num_files_staged} file{'s' if num_files_staged > 1 else ''} on branch {invocation.repo.branch}.\nUse `gud log` to view commit history.")
     
 
 def status(invocation, print_output=True) -> dict:
@@ -579,12 +580,12 @@ def branch(invocation):
         detached_head_commit = invocation.repo.detached_head
         print("-- All branches (* indicates current branch) --\n")
         if detached_head_commit:
-            print(f"* DETACHED_HEAD {detached_head_commit[7:]}")
+            print_green(f"* DETACHED_HEAD {detached_head_commit[7:]}")
         for branch_name in all_branch_names_sorted:
-            prefix = ""
             if not detached_head_commit and branch_name == invocation.repo.branch:
-                prefix = "* " # indicate active branch
-            print(f"{prefix}{branch_name}")
+                print_green(f"*{branch_name}")
+            else:
+                print(branch_name)
 
     elif view_or_rename_or_create_or_delete == "rename":
         selected_branch = questionary.select(
@@ -604,9 +605,9 @@ def branch(invocation):
             if is_valid_branch_name(new_branch_name) and is_unique_name:
                 break
             if not is_valid_name:
-                print("The new branch name must contain only letters, numbers, dashes or underscores.")
+                print_red("The new branch name must contain only letters, numbers, dashes or underscores.")
             if not is_unique_name:
-                print(f"{new_branch_name} already exists as a branch. Please choose another name.")
+                print_red(f"{new_branch_name} already exists as a branch. Please choose another name.")
         branch.rename_branch(selected_branch, new_branch_name)
         print(f"Branch {selected_branch} renamed to {new_branch_name}{' (unchanged)' if new_branch_name == selected_branch else ''}")
 
@@ -620,9 +621,9 @@ def branch(invocation):
             if is_valid_name and new_branch_name not in all_branches_info.keys():
                 break
             if not is_valid_name:
-                print("The branch name must contain only letters, numbers, dashes or underscores.")
+                print_red("The branch name must contain only letters, numbers, dashes or underscores.")
             if new_branch_name in all_branches_info.keys():
-                print(f"{new_branch_name} already exists as a branch. Please choose another name.")
+                print_red(f"{new_branch_name} already exists as a branch. Please choose another name.")
         branch.create_branch(new_branch_name)
         # IMPORTANT - if they are in a detached head state, it should immediately switch them to the branch
         if invocation.repo.detached_head:
@@ -786,7 +787,7 @@ def checkout(invocation):
             sys.exit(f"Switched to branch {specific_branch}.")
     else:
         print(f"Checked out at {specific_hash[:7]}, in a `detached HEAD` state.")
-        print("Please create a branch `gud branch create` if you wish to make changes.")
+        print_orange("Please create a branch `gud branch create` if you wish to make changes.")
 
 
 def restore(invocation):
