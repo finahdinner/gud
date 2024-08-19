@@ -243,11 +243,11 @@ class GudObject:
         assert int(uncompressed_size_str) == len(uncompressed_content)
         return uncompressed_content
 
-    def get_full_file_path_from_hash(self, hash: str) -> str:
+    def get_full_file_path_from_hash(self, hash: str, should_exist=False) -> str:
         dir_name = hash[:2]
         file_name = hash[2:]
         full_path = os.path.join(self.objects_dir, dir_name, file_name)
-        if not os.path.exists(full_path):
+        if should_exist and not os.path.exists(full_path):
             raise FileNotFoundError(f"Hash {hash} does not exist.")
         return full_path
 

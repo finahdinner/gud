@@ -680,7 +680,7 @@ def checkout(invocation):
     if specific_hash:
         try:
             _commit = Commit(invocation.repo)
-            _ = _commit.get_full_file_path_from_hash(specific_hash)
+            _ = _commit.get_full_file_path_from_hash(specific_hash, should_exist=True)
         except FileNotFoundError:
             sys.exit(f"Hash {specific_hash} does not exist.")
 
