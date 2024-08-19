@@ -35,7 +35,8 @@ from pathlib import Path
 
 
 def hello():
-    print_green("Hello! Gud is up and running on your computer!")
+    print("Hello! Gud is up and running on your computer!")
+    print_green("Use the command `gud init` to create a repository here.")
 
 
 def init(invocation):
