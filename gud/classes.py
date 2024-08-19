@@ -83,11 +83,11 @@ class Repository:
         # create objects dir
         objects_dir_path = os.path.join(self.path, "objects/")
         os.mkdir(objects_dir_path)
-        # create heads dir, with main branch file
+        # create heads dir, with master branch file
         heads_dir_path = os.path.join(self.path, "heads/")
         os.mkdir(heads_dir_path)
-        main_head_path = os.path.join(heads_dir_path, "main")
-        with open(main_head_path, "w", encoding="utf-8") as f:
+        master_head_path = os.path.join(heads_dir_path, "master")
+        with open(master_head_path, "w", encoding="utf-8") as f:
             pass # (initially empty)
         # create BRANCH - this stores the current branch -- equivalent to git's HEAD
         head_path = os.path.join(self.path, "BRANCH")
