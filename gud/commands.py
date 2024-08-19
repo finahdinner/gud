@@ -55,6 +55,7 @@ def init(invocation):
         repo_config.add_section("user")
         repo_config.add_section("repo")
 
+        print("You will now be asked for your user credentials - feel free to provide whatever you like.\nThey are only used to label your commits.")
         username_prompt = f"Username? (leave blank to use {global_config['user']['name']}):"
         while True:
             username = questionary.text(username_prompt).ask()
@@ -79,7 +80,8 @@ def init(invocation):
                 email_prompt = "Invalid email address, please try another:"
         repo_config["user"]["email"] = email_address
 
-        gudignore_prompt = "Are there any files or folders you do not want Gud to track?"
+        print('You can tell Gud to "ignore" certain files and folders, so that they aren\'t tracked over time.')
+        gudignore_prompt = "Are there any files or folders you want Gud to ignore?"
         answer = questionary.select(gudignore_prompt, ["No", "Yes"]).ask()
         if answer.lower() == "yes":
             paths_to_ignore = set()
