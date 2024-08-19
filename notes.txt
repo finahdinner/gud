@@ -89,11 +89,6 @@ what is returned when you do `os.stat(file_path).st_mode`)
 
 
 IMPORTANT TODO (priority HIGH to LOW):
-    - Deleted files/folders should appear in the autocomplete in questionary
-    probably need to add a filter or something to the questionary.path() func
-    - create a dummy project directory that should be used for further testing
-        - each time I test, I can copy the contents of this directory into a tmp/ folder, then run the gud testing
-        - reason to do this is so that I don't mess up the actual git repository if something goes wrong
     - make the stdout outputs coloured!!
 
 EDGE CASES:
@@ -122,6 +117,11 @@ DONE:
         - if any file/dir in the directory tree has not been traversed by the time all files in the working dir have
         been checked, then these files/dirs should be marked as "deleted"
     - account for deleted files when doing gud stage add/remove
+    - Deleted files/folders should appear in the autocomplete in questionary
+    probably need to add a filter or something to the questionary.path() func
+    - create a dummy project directory that should be used for further testing
+        - each time I test, I can copy the contents of this directory into a tmp/ folder, then run the gud testing
+        - reason to do this is so that I don't mess up the actual git repository if something goes wrong
 
 
 TODO list on github:

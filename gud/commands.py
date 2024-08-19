@@ -416,14 +416,15 @@ def status(invocation, print_output=True) -> dict:
         "added": sorted(staged_added_files),
         "deleted": sorted(staged_deleted_files)
     }
-    
-    num_staged = sum(len(lst) for lst in staged.values())
 
     unstaged = {
         "modified": sorted(unstaged_modified_files),
         "added": sorted(unstaged_added_files),
         "deleted": sorted(unstaged_deleted_files)
     }
+
+    num_staged = sum(len(lst) for lst in staged.values())
+    num_unstaged = sum(len(lst) for lst in unstaged.values())
 
     if print_output:
         
@@ -464,6 +465,7 @@ def status(invocation, print_output=True) -> dict:
 
     return {
         "num_staged": num_staged,
+        "num_unstaged": num_unstaged,
         "staged": staged,
         "unstaged": unstaged
     }
@@ -644,8 +646,11 @@ def checkout(invocation):
     # ensure there are no staged files, otherwise shouldnt be able to checkout
     file_changes = status(invocation, print_output=False)
     num_files_staged: int = file_changes["num_staged"]
+    num_files_unstaged: int = file_changes["num_unstaged"]
     if num_files_staged > 0:
         sys.exit("You have unsaved changes staged. Please either commit them or remove them (`gud stage remove`) from the staging area.")
+    if num_files_unstaged > 0:
+        sys.exit("You have unstaged changes. Please either:\nStage and commit the files (`gud stage add` then `gud commit`)\nor\nRestore the files back to their previous state (`gud restore <file>`)")
 
     specific_branch = invocation.args.get("branch")
     specific_hash = invocation.args.get("hash")
@@ -775,3 +780,32 @@ def checkout(invocation):
     else:
         print(f"Checked out at {specific_hash[:7]}, in a `detached HEAD` state.")
         print("Please create a branch `gud branch create` if you wish to make changes.")
+
+
+def restore(invocation):
+    
+    # get a set of all file paths that can be reset
+    file_changes = status(invocation, print_output=False)
+    unstaged_modified_files = set(
+        os.path.join(invocation.repo.root, path)
+        for path in file_changes["unstaged"]["modified"]
+    )
+
+    file_path_rel = os.path.relpath(invocation.args["file_path"][0], invocation.repo.root)
+    file_path_abs = os.path.join(invocation.repo.root, file_path_rel)
+
+    if not file_path_abs in unstaged_modified_files:
+        sys.exit(f"Specified file path must be modified and unstaged. Use `gud status` to see which files can be restored.")
+
+    # restore the file
+    branch_commit_hash = invocation.repo.head
+    tree = Tree(invocation.repo)
+    commit = Commit(invocation.repo)
+    blob = Blob(invocation.repo)
+    head_index = tree.get_index_of_commit(commit, branch_commit_hash)
+    blob_hash = head_index[file_path_rel]["hash"]
+    uncompressed_content = blob.deserialise_object(obj_hash=blob_hash, expected_type="blob")
+    with open(file_path_abs, "wb") as f:
+        f.write(uncompressed_content)
+    # don't need to update the index because the file was unstaged anyway
+    print(f"Successfully restored file {file_path_rel} back to its previous state (on branch {invocation.repo.branch}).")

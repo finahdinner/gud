@@ -11,7 +11,8 @@ from .commands import (
     status,
     log,
     branch,
-    checkout
+    checkout,
+    restore
 )
 
 
@@ -20,10 +21,6 @@ parser = argparse.ArgumentParser(
 )
 subparsers = parser.add_subparsers(title="commands", dest="command")
 subparsers.required = True
-
-# list of all Gud commands that the user can provide
-hello_subparser = subparsers.add_parser('hello', help='Say hello') # remove this afterwards
-hello_subparser.add_argument("name", nargs="?", help="Name to greet")
 
 init_subparser = subparsers.add_parser('init', help='Initialise repository')
 init_subparser.add_argument("is_default", nargs="?", choices=["default"], help="Skip the interactive prompt and use default values")
@@ -56,6 +53,9 @@ branch_or_hash = checkout_subparser.add_mutually_exclusive_group(required=False)
 branch_or_hash.add_argument("--branch", help="Choose a branch to checkout to")
 branch_or_hash.add_argument("--hash", help="Choose a commit hash to checkout to")
 
+restore_subparser = subparsers.add_parser("restore", help="Restore a file back to its state at the HEAD commit")
+file_path = restore_subparser.add_argument("file_path", nargs=1, help="A specified file to restore")
+
 
 def main():
     
@@ -82,6 +82,8 @@ def main():
             branch(invocation)
         case "checkout":
             checkout(invocation)
+        case "restore":
+            restore(invocation)
 
     # some commands break if the user isn't in the root directory - so this is a warning to them
     if invocation.command != "init":
