@@ -665,6 +665,16 @@ def checkout(invocation):
 
     branch = Branch(invocation.repo)
     all_branches_info = branch.get_all_branches_info()
+
+    if specific_branch is not None and specific_branch not in all_branches_info.keys():
+        sys.exit(f"Branch {specific_branch} does not exist.")
+    if specific_hash:
+        try:
+            _commit = Commit(invocation.repo)
+            _ = _commit.get_full_file_path_from_hash(specific_hash)
+        except FileNotFoundError:
+            sys.exit(f"Hash {specific_hash} does not exist.")
+
     # do not include any branches without a HEAD (ie any branches with zero commits)
     all_branches_info_filtered = {branch: info for branch, info in all_branches_info.items() if info}
     if not all_branches_info_filtered:

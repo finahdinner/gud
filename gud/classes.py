@@ -246,7 +246,10 @@ class GudObject:
     def get_full_file_path_from_hash(self, hash: str) -> str:
         dir_name = hash[:2]
         file_name = hash[2:]
-        return os.path.join(self.objects_dir, dir_name, file_name)
+        full_path = os.path.join(self.objects_dir, dir_name, file_name)
+        if not os.path.exists(full_path):
+            raise FileNotFoundError(f"Hash {hash} does not exist.")
+        return full_path
 
 
 class Blob(GudObject):    
