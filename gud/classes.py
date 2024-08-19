@@ -92,7 +92,7 @@ class Repository:
         # create BRANCH - this stores the current branch -- equivalent to git's HEAD
         head_path = os.path.join(self.path, "BRANCH")
         with open(head_path, "w", encoding="utf-8") as f:
-            f.write("ref: main") # store the name of the branch it is pointing to
+            f.write("ref: master") # store the name of the branch it is pointing to
         # create DETACHED_HEAD - this stores the current detached head (which may be none)
         head_path = os.path.join(self.path, "DETACHED_HEAD")
         with open(head_path, "w", encoding="utf-8") as f:
