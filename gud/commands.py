@@ -85,8 +85,7 @@ def init(invocation):
                     for path in paths_to_ignore:
                         print(path)
                 path = questionary.path(
-                    f"Search for a file/directory to for Gud to ignore (enter blank when finished):",
-                    validate=PathValidatorQuestionary()
+                    f"Search for a file/directory to for Gud to ignore (enter blank when finished):"
                 ).ask()
                 if path == "":
                     break
