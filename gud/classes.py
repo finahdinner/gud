@@ -60,7 +60,7 @@ class Repository:
         else:
             self.root = __class__.find_repo_root_dir(cwd)
             if not self.root:
-                sys.exit("No gud repository found in this directory, or in any parent directory.")
+                sys.exit("No gud repository found in this directory, or in any parent directory.\nUse `gud init` to create a repository.")
             self.path = os.path.join(self.root, ".gud/")
 
         self.global_config = GlobalConfig()
