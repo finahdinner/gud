@@ -429,7 +429,7 @@ def status(invocation, print_output=True) -> dict:
     }
 
     num_staged = sum(len(lst) for lst in staged.values())
-    num_unstaged = sum(len(lst) for lst in unstaged.values())
+    num_unstaged_modified = len(unstaged["modified"])
 
     if print_output:
         
@@ -470,7 +470,7 @@ def status(invocation, print_output=True) -> dict:
 
     return {
         "num_staged": num_staged,
-        "num_unstaged": num_unstaged,
+        "num_unstaged_modified": num_unstaged_modified,
         "staged": staged,
         "unstaged": unstaged
     }
@@ -651,10 +651,10 @@ def checkout(invocation):
     # ensure there are no staged files, otherwise shouldnt be able to checkout
     file_changes = status(invocation, print_output=False)
     num_files_staged: int = file_changes["num_staged"]
-    num_files_unstaged: int = file_changes["num_unstaged"]
+    num_files_unstaged_modified: int = file_changes["num_unstaged_modified"]
     if num_files_staged > 0:
         sys.exit("You have unsaved changes staged. Please either commit them or remove them (`gud stage remove`) from the staging area.")
-    if num_files_unstaged > 0:
+    if num_files_unstaged_modified > 0:
         sys.exit("You have unstaged changes. Please either:\nStage and commit the files (`gud stage add` then `gud commit`)\nor\nRestore the files back to their previous state (`gud restore <file>`)")
 
     specific_branch = invocation.args.get("branch")
