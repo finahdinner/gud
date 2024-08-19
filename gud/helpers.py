@@ -122,15 +122,17 @@ def get_all_ignored_paths(initial_dir, as_rel_path=False) -> set:
     return all_ignored_file_paths
 
 
-def format_path_for_gudignore(path_str):
+def format_path_for_gudignore(path_str, check_if_dir=True):
     """
     1) posix-style file path
     2) ends in backslash if the path is a directory
     """
     path = Path(path_str)
     path_posix = path.as_posix()
-    # ensure dirs end in a slash
-    if path.is_dir():
+    if not check_if_dir: # prioritise keeping the trailing slash
+        if path_str.endswith("/") and not path_posix.endswith("/"):
+            return path_posix + "/"
+    elif path.is_dir():
         if not path_posix.endswith("/"):
             return path_posix + "/"
     return path_posix

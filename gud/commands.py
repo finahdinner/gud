@@ -84,12 +84,14 @@ def init(invocation):
                     print("Files/directories that will be ignored:")
                     for path in paths_to_ignore:
                         print(path)
-                path = questionary.path(
-                    f"Search for a file/directory to for Gud to ignore (enter blank when finished):"
+                path = questionary.text(
+                    f"Type in a file/directory path for Gud to ignore (enter blank when finished):"
                 ).ask()
+                if path is None:
+                    return
                 if path == "":
                     break
-                paths_to_ignore.add(format_path_for_gudignore(path))
+                paths_to_ignore.add(format_path_for_gudignore(path, check_if_dir=False))
             # create and save the .gudignore file, including comments from the default gudignore file in the installation
             default_gudignore_file = get_default_file_from_package_installation("gudignore")
             if not default_gudignore_file:
