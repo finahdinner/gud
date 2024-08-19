@@ -59,7 +59,9 @@ def init(invocation):
         username_prompt = f"Username? (leave blank to use {global_config['user']['name']}):"
         while True:
             username = questionary.text(username_prompt).ask()
-            if not username: # default to global username
+            if username is None:
+                return
+            if username.strip() == "": # default to global username
                 username = invocation.repo.global_config.get_config()["user"]["name"]
                 break
             if is_valid_username(username):
@@ -71,7 +73,9 @@ def init(invocation):
         email_prompt = f"Email address? (leave blank to use {global_config['user']['email']}):"
         while True:
             email_address = questionary.text(email_prompt).ask()
-            if not email_address: # default to global email address
+            if email_address is None:
+                return
+            if email_address.strip() == "": # default to global email address
                 email_address = invocation.repo.global_config.get_config()["user"]["email"]
                 break
             if is_valid_email(email_address):
