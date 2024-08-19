@@ -13,7 +13,9 @@ from .helpers import (
     format_path_for_gudignore,
     get_file_mode,
     see_if_command_exists,
-    open_relevant_pager
+    open_relevant_pager,
+    print_red,
+    print_green
 )
 from .classes import (
     Blob,
@@ -447,25 +449,25 @@ def status(invocation, print_output=True) -> dict:
             if any(staged.values()):
                 print("Changes to be committed:\n  Use `gud stage remove <file>` to remove a file from the staging area")
                 for file_path in staged["modified"]:
-                    print(f"\tmodified: {file_path}")
+                    print_green(f"\tmodified: {file_path}")
                 for file_path in staged["deleted"]:
-                    print(f"\tdeleted: {file_path}")
+                    print_green(f"\tdeleted: {file_path}")
                 for file_path in staged["added"]:
-                    print(f"\tnew file: {file_path}")
+                    print_green(f"\tnew file: {file_path}")
                 print()
 
             if unstaged["modified"] or unstaged["deleted"]:
                 print("Changes not staged for commit:\n  Use `gud stage add <file>` to update a file in the staging area")
                 for file_path in unstaged["modified"]:
-                    print(f"\tmodified: {file_path}")
+                    print_red(f"\tmodified: {file_path}")
                 for file_path in unstaged["deleted"]:
-                    print(f"\tdeleted: {file_path}")
+                    print_red(f"\tdeleted: {file_path}")
                 print()
 
             if unstaged["added"]:
                 print("Untracked files:\n  Use `gud stage add <file>` to include a file in the staging area")
                 for file_path in unstaged["added"]:
-                    print(f"\tnew file: {file_path}")
+                    print_red(f"\tnew file: {file_path}")
                 print()
 
     return {

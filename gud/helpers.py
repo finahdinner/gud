@@ -5,6 +5,7 @@ import subprocess
 import importlib.util
 from os.path import realpath
 from pathlib import Path
+from termcolor import colored
 
 
 class EnumWrapper(Enum):
@@ -146,3 +147,11 @@ def get_file_mode(file_path):
     See https://docs.nersc.gov/filesystems/unix-file-permissions/ for an explanation
     """
     return oct(os.stat(file_path).st_mode).replace("0o", "")
+
+
+def print_red(text):
+    print(colored(text, "red"))
+
+
+def print_green(text):
+    print(colored(text, "red"))

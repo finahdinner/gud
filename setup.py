@@ -10,6 +10,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         "questionary==2.0.1",
+        "termcolor==2.4.0"
     ],
     include_package_data=True,
     package_data={

@@ -5,6 +5,8 @@ cffi==1.16.0
 charset-normalizer==3.3.2
 cryptography==42.0.8
 docutils==0.21.2
+gud-finahdinner @ file:///home/hanif/gud/dist/gud_finahdinner-0.1-py3-none-any.whl
+gud-vcs @ file:///home/hanif/gud/dist/gud_vcs-0.1-py3-none-any.whl
 idna==3.7
 importlib_metadata==8.0.0
 jaraco.classes==3.4.0
@@ -27,6 +29,7 @@ requests-toolbelt==1.0.0
 rfc3986==2.0.0
 rich==13.7.1
 SecretStorage==3.3.3
+termcolor==2.4.0
 twine==5.1.1
 urllib3==2.2.2
 wcwidth==0.2.13
