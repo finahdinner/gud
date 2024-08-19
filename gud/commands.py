@@ -86,6 +86,8 @@ def init(invocation):
 
         print('You can tell Gud to "ignore" certain files and folders, so that they aren\'t tracked over time.')
         gudignore_prompt = "Are there any files or folders you want Gud to ignore?"
+        if gudignore_prompt is None:
+            return
         answer = questionary.select(gudignore_prompt, ["No", "Yes"]).ask()
         if answer.lower() == "yes":
             paths_to_ignore = set()
