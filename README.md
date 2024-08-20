@@ -7,7 +7,7 @@ A recreation of the core functionality of [Git](https://git-scm.com/), designed 
 
 #### For all platforms (Windows, MacOS, Linux)
 
-1. Download and install Python 3.10 or above, from https://www.python.org/downloads/
+1. Download and install Python **3.10 or above**, from https://www.python.org/downloads/
 2. Open your `Terminal`
 3. Confirm that `python` and `pip` are installed on your machine:
     - `python --version` (or `python3 --version`)
