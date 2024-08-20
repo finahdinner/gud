@@ -100,7 +100,7 @@ def main():
             restore(invocation)
 
     # some commands break if the user isn't in the root directory - so this is a warning to them
-    if invocation.command != "init":
+    if invocation.command != "init" and invocation.command != "tutorial":
         if cwd != invocation.repo.root:
             cwd_parts, root_parts = cwd.split(os.sep), invocation.repo.root.split(os.sep)
             dirs_difference = len(cwd_parts) - len(root_parts)
