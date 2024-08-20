@@ -60,3 +60,20 @@ Quick notes before starting:
     - You will notice that the log has been updated with your most previous commit - good stuff!
    
 #### So why are we doing all of this? What is the point of this software?
+
+Good question. Up until this point, we haven't really done anything too excited.
+
+#### But here is when it gets a little interesting!
+
+17. Delete the project folder.
+    <br>Yes, you read that right - delete it!
+18. Use the command `gud status`
+    - You will notice that Gud has detected that you deleted the folder.
+    - Your output should look similar to below (with or without the *pycache* files - you can ignore those!)
+    ![image](https://github.com/user-attachments/assets/20be8517-6faf-484f-b366-2b1665ef0220)
+19. The next commands will depend on whether you are on Windows or Mac/Linux (due to how file paths work):
+    - On **Windows** - use `gud stage add project\main.py` then `gud stage add project\vars.py`
+    - On **Mac or Linux** - use `gud stage add project/main.py` then `gud stage add project/vars.py`
+20. Use the command `gud commit`
+    - Leave a message such as "deleted project main.py and vars.py", or similar. This commit is telling Gud to take note of these deletions.
+
