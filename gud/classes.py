@@ -18,6 +18,7 @@ from hashlib import sha1
 from questionary import Validator, ValidationError
 import appdirs
 import shutil
+import json
 
 
 class CommandInvocation:
@@ -48,7 +49,7 @@ class CommandInvocation:
                     sys.exit()
                 else:
                     # create the repo with default options
-                    self.repo = Repository(tutorial_repo_root, create_new_repo=True, tutorial_repo=True)
+                    self.repo = Repository(tutorial_repo_root, create_new_repo=True, is_tutorial_repo=True)
                     self.repo.create_repo()
                     self.repo.copy_global_to_repo_config()
             elif self.args["start_or_end"][0] == "end":
@@ -80,7 +81,7 @@ class CommandInvocation:
     
 
 class Repository:
-    def __init__(self, cwd: str, create_new_repo = False, tutorial_repo = False):
+    def __init__(self, cwd: str, create_new_repo = False, is_tutorial_repo = False):
         if create_new_repo:
             existing_repo_root_dir = __class__.find_repo_root_dir(cwd)
             if existing_repo_root_dir:
@@ -98,10 +99,14 @@ class Repository:
         self.global_config = GlobalConfig()
         self.repo_config = RepoConfig(repo_path=self.path)
         # mark as tutorial repo, which will add an extra checklist.json file to .gud
-        if tutorial_repo:
-            self.is_tutorial_repo = tutorial_repo
+        tutorial_checklist_path = os.path.join(self.path, "tutorial_checklist.json")
+        if is_tutorial_repo:
+            self.is_tutorial_repo = is_tutorial_repo
         else:
-            self.is_tutorial_repo = os.path.exists(os.path.join(self.path, "tutorial_checklist.json"))
+            self.is_tutorial_repo = os.path.exists(tutorial_checklist_path)
+
+        if self.is_tutorial_repo:
+            self.tutorial_instruction = self.get_next_tutorial_instruction(tutorial_checklist_path)
 
         if not create_new_repo: # if the .gud dir already exists
             self.config = self.resolve_working_config()
@@ -231,6 +236,24 @@ class Repository:
                 file_hash = new_index_dict[file_path]["hash"]
                 f.write(f"{file_mode}\t{file_type}\t{file_hash}\t{file_path}\n")
     
+    def parse_tutorial_checklist(self, file_path: str) -> list:
+        with open(file_path, "r", encoding="utf-8") as f:
+            checklist_as_list = json.load(f)
+            return checklist_as_list
+        
+    def write_to_tutorial_checklist(self, file_path: str, new_checklist: list) -> list:
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(new_checklist, f)
+
+    def get_next_tutorial_instruction(self, file_path: str) -> dict:
+        checklist_as_list = self.parse_tutorial_checklist(file_path)
+        # get the first incomplete instruction
+        for instruction in checklist_as_list:
+            if instruction["completed"] == False:
+                return instruction
+        else:
+            return {} # everything is complete
+
     @staticmethod
     def find_repo_root_dir(curr_path) -> str:
         """
