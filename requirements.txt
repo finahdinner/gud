@@ -5,8 +5,6 @@ cffi==1.16.0
 charset-normalizer==3.3.2
 cryptography==42.0.8
 docutils==0.21.2
-gud-finahdinner @ file:///home/hanif/gud/dist/gud_finahdinner-0.1-py3-none-any.whl
-gud-vcs @ file:///home/hanif/gud/dist/gud_vcs-0.1-py3-none-any.whl
 idna==3.7
 importlib_metadata==8.0.0
 jaraco.classes==3.4.0
