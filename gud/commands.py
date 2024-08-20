@@ -56,6 +56,10 @@ def load_example(cwd):
     print_col("Please use the command", "dark_grey", end=" ")
     print_col("cd gud_tutorial", "cyan", end=" ")
     print_col("to continue with the tutorial", "dark_grey")
+    # just because pycache sneaks its way in :()
+    pycache_in_project_folder = os.path.join(new_example_folder, "project", "__pycache__")
+    if os.path.exists(pycache_in_project_folder):
+        shutil.rmtree(pycache_in_project_folder)
 
 
 def init(invocation):
