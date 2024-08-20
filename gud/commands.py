@@ -8,15 +8,13 @@ from .helpers import (
     is_valid_email,
     is_valid_branch_name,
     open_relevant_editor,
-    get_default_file_from_package_installation,
+    get_file_from_package_installation,
     get_all_ignored_paths,
     format_path_for_gudignore,
     get_file_mode,
     see_if_command_exists,
     open_relevant_pager,
-    print_red,
-    print_green,
-    print_dark_grey
+    print_col
 )
 from .classes import (
     Blob,
@@ -28,6 +26,7 @@ from .classes import (
     get_indexed_file_paths_that_may_not_exist
 )
 import os
+import shutil
 import sys
 import tempfile
 from copy import deepcopy
@@ -36,7 +35,27 @@ from pathlib import Path
 
 def hello():
     print("Hello! Gud is up and running on your computer!")
-    print_green("Use the command `gud init` to create a repository here.")
+    print_col("Use the command `gud init` to create a repository here.", "green")
+
+
+def load_example(cwd):
+    default_folder_file_path = get_file_from_package_installation("gud_tutorial")
+    if not default_folder_file_path:
+        print_col("Could not find example folder. Possibly corrupted installation.", "red")
+        sys.exit()
+    new_example_folder = os.path.join(cwd, "gud_tutorial")
+    try:
+        shutil.copytree(default_folder_file_path, new_example_folder)
+    except FileExistsError:
+        print_col("A `gud_tutorial` folder already exists!", "red")
+        print_col("If you wish to create a fresh version, please delete the old one first", "dark_grey")
+        print_col("If you are continuing with the tutorial, use the command:", "dark_grey")
+        print_col("cd gud_tutorial", "cyan")
+        sys.exit()
+    print_col("`gud_tutorial` folder successfully loaded.", "green")
+    print_col("Please use the command", "dark_grey", end=" ")
+    print_col("cd gud_tutorial", "cyan", end=" ")
+    print_col("to continue with the tutorial", "dark_grey")
 
 
 def init(invocation):
@@ -105,7 +124,7 @@ def init(invocation):
                     break
                 paths_to_ignore.add(format_path_for_gudignore(path, check_if_dir=False))
             # create and save the .gudignore file, including comments from the default gudignore file in the installation
-            default_gudignore_file = get_default_file_from_package_installation("gudignore")
+            default_gudignore_file = get_file_from_package_installation(os.path.join("defaults", "gudignore"))
             if not default_gudignore_file:
                 raise Exception("Default gudignore file not found - possibly corrupted installation.")
             repo_gudignore_path = os.path.join(invocation.repo.root, ".gudignore")
@@ -120,7 +139,7 @@ def init(invocation):
         invocation.repo.create_repo()
         invocation.repo.repo_config.set_config(repo_config)
 
-    print_green(f"Initialised Gud repository in {invocation.repo.path}")
+    print_col(f"Initialised Gud repository in {invocation.repo.path}", "green")
 
 
 def config(invocation):
@@ -203,7 +222,7 @@ def stage(invocation):
             # check if the path exists within the repository
             abs_path = os.path.abspath(os.path.expanduser(path)) # expanduser expands the ~
             if os.path.commonprefix([abs_path, invocation.repo.root]) != invocation.repo.root:
-                print_red(f"Path {path} does not exist within the repository, so cannot be {connective} the staging area")
+                print_col(f"Path {path} does not exist within the repository, so cannot be {connective} the staging area", "red")
                 continue
             paths_specified.add(abs_path) # store the rel path
             print(f"Files/directories to be {connective} the staging area:")
@@ -312,7 +331,7 @@ def commit(invocation):
     with open(heads_path, "w", encoding="utf-8") as f:
         f.write(commit_hash)
 
-    print_green(f"Successfully committed {num_files_staged} file{'s' if num_files_staged > 1 else ''} on branch {invocation.repo.branch}.\nUse `gud log` to view commit history.")
+    print_col(f"Successfully committed {num_files_staged} file{'s' if num_files_staged > 1 else ''} on branch {invocation.repo.branch}.\nUse `gud log` to view commit history.", "green")
     
 
 def status(invocation, print_output=True) -> dict:
@@ -459,25 +478,25 @@ def status(invocation, print_output=True) -> dict:
             if any(staged.values()):
                 print("Changes to be committed:\n  Use `gud stage remove <file>` to remove a file from the staging area")
                 for file_path in staged["modified"]:
-                    print_green(f"\tmodified: {file_path}")
+                    print_col(f"\tmodified: {file_path}", "green")
                 for file_path in staged["deleted"]:
-                    print_green(f"\tdeleted: {file_path}")
+                    print_col(f"\tdeleted: {file_path}", "green")
                 for file_path in staged["added"]:
-                    print_green(f"\tnew file: {file_path}")
+                    print_col(f"\tnew file: {file_path}", "green")
                 print()
 
             if unstaged["modified"] or unstaged["deleted"]:
                 print("Changes not staged for commit:\n  Use `gud stage add <file>` to update a file in the staging area")
                 for file_path in unstaged["modified"]:
-                    print_red(f"\tmodified: {file_path}")
+                    print_col(f"\tmodified: {file_path}", "red")
                 for file_path in unstaged["deleted"]:
-                    print_red(f"\tdeleted: {file_path}")
+                    print_col(f"\tdeleted: {file_path}", "red")
                 print()
 
             if unstaged["added"]:
                 print("Untracked files:\n  Use `gud stage add <file>` to include a file in the staging area")
                 for file_path in unstaged["added"]:
-                    print_red(f"\tnew file: {file_path}")
+                    print_col(f"\tnew file: {file_path}", "red")
                 print()
 
     return {
@@ -589,10 +608,10 @@ def branch(invocation):
         detached_head_commit = invocation.repo.detached_head
         print("-- All branches (* indicates current branch) --\n")
         if detached_head_commit:
-            print_green(f"* DETACHED_HEAD {detached_head_commit[7:]}")
+            print_col(f"* DETACHED_HEAD {detached_head_commit[7:]}", "green")
         for branch_name in all_branch_names_sorted:
             if not detached_head_commit and branch_name == invocation.repo.branch:
-                print_green(f"*{branch_name}")
+                print_col(f"*{branch_name}", "green")
             else:
                 print(branch_name)
 
@@ -614,9 +633,9 @@ def branch(invocation):
             if is_valid_branch_name(new_branch_name) and is_unique_name:
                 break
             if not is_valid_name:
-                print_red("The new branch name must contain only letters, numbers, dashes or underscores.")
+                print_col("The new branch name must contain only letters, numbers, dashes or underscores.", "red")
             if not is_unique_name:
-                print_red(f"{new_branch_name} already exists as a branch. Please choose another name.")
+                print_col(f"{new_branch_name} already exists as a branch. Please choose another name.", "red")
         branch.rename_branch(selected_branch, new_branch_name)
         print(f"Branch {selected_branch} renamed to {new_branch_name}{' (unchanged)' if new_branch_name == selected_branch else ''}")
 
@@ -630,9 +649,9 @@ def branch(invocation):
             if is_valid_name and new_branch_name not in all_branches_info.keys():
                 break
             if not is_valid_name:
-                print_red("The branch name must contain only letters, numbers, dashes or underscores.")
+                print_col("The branch name must contain only letters, numbers, dashes or underscores.", "red")
             if new_branch_name in all_branches_info.keys():
-                print_red(f"{new_branch_name} already exists as a branch. Please choose another name.")
+                print_col(f"{new_branch_name} already exists as a branch. Please choose another name.", "red")
         branch.create_branch(new_branch_name)
         # IMPORTANT - if they are in a detached head state, it should immediately switch them to the branch
         if invocation.repo.detached_head:
@@ -806,7 +825,7 @@ def checkout(invocation):
             sys.exit(f"Switched to branch {specific_branch}.")
     else:
         print(f"Checked out at {specific_hash[:7]}, in a `detached HEAD` state.")
-        print_dark_grey("Please create a branch `gud branch create` if you wish to make changes.")
+        print_col("Please create a branch `gud branch create` if you wish to make changes.", "dark_grey")
 
 
 def restore(invocation):

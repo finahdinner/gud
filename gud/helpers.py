@@ -75,10 +75,9 @@ def see_if_command_exists(command: str):
     return result.returncode == 0
 
 
-def get_default_file_from_package_installation(file_name) -> None|str:
+def get_file_from_package_installation(file_path) -> None|str:
     """
-    Retrieve the file path of the default config file,
-    which is packaged up in the gud installation.
+    Retrieve a file from the package installation
     """
     spec = importlib.util.find_spec("gud")
     if spec is None:
@@ -87,8 +86,8 @@ def get_default_file_from_package_installation(file_name) -> None|str:
     if loc is None:
         return None
     loc_dir = os.path.dirname(loc)
-    default_file_path = realpath(os.path.join(loc_dir, "defaults", file_name))
-    return default_file_path
+    full_file_path = realpath(os.path.join(loc_dir, file_path))
+    return full_file_path
 
 
 def parse_gudignore_in_dir(parent_dir) -> set:
@@ -149,13 +148,5 @@ def get_file_mode(file_path):
     return oct(os.stat(file_path).st_mode).replace("0o", "")
 
 
-def print_red(text):
-    print(colored(text, "red"))
-
-
-def print_green(text):
-    print(colored(text, "green"))
-
-
-def print_dark_grey(text):
-    print(colored(text, "dark_grey"))
+def print_col(text, col, *args, **kwargs):
+    print(colored(text, col), *args, **kwargs)

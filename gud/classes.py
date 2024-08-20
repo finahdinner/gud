@@ -6,7 +6,7 @@ from datetime import datetime
 from configparser import ConfigParser
 from .helpers import (
     OperatingSystem,
-    get_default_file_from_package_installation
+    get_file_from_package_installation
 )
 from .globals import COMPRESSION_LEVEL
 import platform
@@ -591,7 +591,7 @@ class GlobalConfig:
         os.makedirs(cls.__dir, exist_ok=True)
         if os.path.exists(cls.path):
             return
-        default_config_file = get_default_file_from_package_installation("config")
+        default_config_file = get_file_from_package_installation(os.path.join("defaults", "config"))
         if not default_config_file:
             raise Exception("Default config file not found - possibly corrupted installation.")
         with open(default_config_file, "r", encoding="utf-8") as f:

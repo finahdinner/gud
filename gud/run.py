@@ -4,6 +4,7 @@ import os
 from .classes import CommandInvocation
 from .commands import (
     hello,
+    load_example,
     init,
     config,
     ignoring,
@@ -24,6 +25,9 @@ subparsers = parser.add_subparsers(title="commands", dest="command")
 subparsers.required = True
 
 hello_subparser = subparsers.add_parser("hello", help="Hello!")
+
+# used to load the example folder, so people can use it alongside the written tutorial
+load_example_subparser = subparsers.add_parser("loadexample", help="Load an example folder into your directory. For use alongside the written Gud tutorial.")
 
 init_subparser = subparsers.add_parser('init', help='Initialise repository')
 init_subparser.add_argument("is_default", nargs="?", choices=["default"], help="Skip the interactive prompt and use default values")
@@ -63,12 +67,15 @@ file_path = restore_subparser.add_argument("file_path", nargs=1, help="A specifi
 def main():
     
     all_args = parser.parse_args(sys.argv[1:])
+    cwd = os.getcwd()
 
     if all_args.command == "hello":
         hello()
         return
+    elif all_args.command == "loadexample":
+        load_example(cwd)
+        return
 
-    cwd = os.getcwd()
     invocation = CommandInvocation(all_args, cwd)
 
     match invocation.command:

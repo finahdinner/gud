@@ -14,7 +14,14 @@ setup(
     ],
     include_package_data=True,
     package_data={
-        'gud': ['defaults/config', 'defaults/gudignore'],
+        'gud': [
+            'defaults/config',
+            'defaults/gudignore',
+            "gud_tutorial/notes.txt",
+            "gud_tutorial/README.md",
+            "gud_tutorial/project/main.py",
+            "gud_tutorial/project/vars.py",
+        ],
     },
     entry_points={
         "console_scripts": [
