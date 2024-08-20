@@ -4,6 +4,7 @@ import os
 from .classes import CommandInvocation
 from .commands import (
     hello,
+    tutorial,
     init,
     config,
     ignoring,
@@ -59,6 +60,9 @@ branch_or_hash.add_argument("--hash", help="Choose a commit hash to checkout to"
 restore_subparser = subparsers.add_parser("restore", help="Restore a file back to its state at the HEAD commit")
 file_path = restore_subparser.add_argument("file_path", nargs=1, help="A specified file to restore")
 
+tutorial_subparser = subparsers.add_parser("tutorial", help="Start or end the tutorial")
+start_or_end = tutorial_subparser.add_argument("start_or_end", nargs=1, choices=["start", "end"], help="Choose to start or end the tutorial")
+
 
 def main():
     
@@ -72,6 +76,8 @@ def main():
     invocation = CommandInvocation(all_args, cwd)
 
     match invocation.command:
+        case "tutorial":
+            tutorial(invocation)
         case "init":
             init(invocation)
         case "config":

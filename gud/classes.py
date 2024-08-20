@@ -6,7 +6,10 @@ from datetime import datetime
 from configparser import ConfigParser
 from .helpers import (
     OperatingSystem,
-    get_default_file_from_package_installation
+    get_file_path_from_package_installation,
+    print_red,
+    print_dark_grey,
+    print_green
 )
 from .globals import COMPRESSION_LEVEL
 import platform
@@ -14,6 +17,7 @@ import zlib
 from hashlib import sha1
 from questionary import Validator, ValidationError
 import appdirs
+import shutil
 
 
 class CommandInvocation:
@@ -30,6 +34,33 @@ class CommandInvocation:
             sys.exit(f"Your platform ({pltform}) is not supported.\nSupported platforms: {OperatingSystem.get_all_names()}")
         if self.command == "init":
             self.repo = Repository(cwd, create_new_repo=True)
+        elif self.command == "tutorial":
+            if self.args["start_or_end"][0] == "start":      
+                tutorial_repo_root = os.path.join(cwd, "tutorial")
+                tutorial_boilerplate_folder_path = get_file_path_from_package_installation(os.path.join("tutorial", "tutorial"))
+                if not tutorial_boilerplate_folder_path:
+                    sys.exit("Unable to find default tutorial folder. Possibly corrupted installation.")
+                try:
+                    shutil.copytree(tutorial_boilerplate_folder_path, tutorial_repo_root)
+                except FileExistsError:
+                    print_red("A folder called `tutorial` already exists (possibly because you already started the tutorial?)")
+                    print_dark_grey("Please delete it or `cd` (or open the terminal) elsewhere before starting the tutorial.")
+                    sys.exit()
+                else:
+                    self.repo = Repository(tutorial_repo_root, create_new_repo=True, tutorial_repo=True)
+            elif self.args["start_or_end"][0] == "end":
+                # should check to see if the user is in the tutorial repo
+                self.repo = Repository(cwd)
+                if not self.repo.is_tutorial_repo:
+                    print_red("You are not in a tutorial repository, so cannot use `gud tutorial end`")
+                    sys.exit()
+                # change working dir to one path up
+                tutorial_repo_root = os.getcwd()
+                os.chdir(os.path.dirname(tutorial_repo_root))
+                # delete the tutorial folder you were in
+                shutil.rmtree(tutorial_repo_root)
+                print_green("Gud tutorial successfully ended.")
+                sys.exit()
         else:
             self.repo = Repository(cwd)
 
@@ -48,7 +79,7 @@ class CommandInvocation:
     
 
 class Repository:
-    def __init__(self, cwd: str, create_new_repo = False):
+    def __init__(self, cwd: str, create_new_repo = False, tutorial_repo = False):
         if create_new_repo:
             existing_repo_root_dir = __class__.find_repo_root_dir(cwd)
             if existing_repo_root_dir:
@@ -65,6 +96,11 @@ class Repository:
 
         self.global_config = GlobalConfig()
         self.repo_config = RepoConfig(repo_path=self.path)
+        # mark as tutorial repo, which will add an extra checklist.json file to .gud
+        if tutorial_repo:
+            self.is_tutorial_repo = tutorial_repo
+        else:
+            self.is_tutorial_repo = os.path.exists(os.path.join(self.path, "tutorial_checklist.json"))
 
         if not create_new_repo: # if the .gud dir already exists
             self.config = self.resolve_working_config()
@@ -101,7 +137,13 @@ class Repository:
         index_path = os.path.join(self.path, "index")
         with open(index_path, "w", encoding="utf-8") as f:
             pass
-        
+        if self.is_tutorial_repo:
+            tutorial_marker_file_path = os.path.join(self.path, "tutorial_checklist")
+            default_tutorial_marker_path = get_file_path_from_package_installation(os.path.join("tutorial", "tutorial_checklist.json"))
+            if not default_tutorial_marker_path:
+                sys.exit("Unable to find default tutorial checklist. Possibly corrupted installation.")
+            shutil.copy(default_tutorial_marker_path, tutorial_marker_file_path)
+
     def get_current_branch(self) -> str:
         branch_ref_file_path = os.path.join(self.path, "BRANCH")
         with open(branch_ref_file_path, "r", encoding="utf-8") as f:
@@ -591,7 +633,7 @@ class GlobalConfig:
         os.makedirs(cls.__dir, exist_ok=True)
         if os.path.exists(cls.path):
             return
-        default_config_file = get_default_file_from_package_installation("config")
+        default_config_file = get_file_path_from_package_installation(os.path.join("defaults", "config"))
         if not default_config_file:
             raise Exception("Default config file not found - possibly corrupted installation.")
         with open(default_config_file, "r", encoding="utf-8") as f:

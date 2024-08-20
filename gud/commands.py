@@ -8,7 +8,7 @@ from .helpers import (
     is_valid_email,
     is_valid_branch_name,
     open_relevant_editor,
-    get_default_file_from_package_installation,
+    get_file_path_from_package_installation,
     get_all_ignored_paths,
     format_path_for_gudignore,
     get_file_mode,
@@ -105,7 +105,7 @@ def init(invocation):
                     break
                 paths_to_ignore.add(format_path_for_gudignore(path, check_if_dir=False))
             # create and save the .gudignore file, including comments from the default gudignore file in the installation
-            default_gudignore_file = get_default_file_from_package_installation("gudignore")
+            default_gudignore_file = get_file_path_from_package_installation(os.path.join("defaults", "gudignore"))
             if not default_gudignore_file:
                 raise Exception("Default gudignore file not found - possibly corrupted installation.")
             repo_gudignore_path = os.path.join(invocation.repo.root, ".gudignore")
@@ -836,3 +836,27 @@ def restore(invocation):
         f.write(uncompressed_content)
     # don't need to update the index because the file was unstaged anyway
     print(f"Successfully restored file {file_path_rel} back to its previous state (on branch {invocation.repo.branch}).")
+
+
+def tutorial(invocation):
+    
+    start_or_end = invocation.args.get("start_or_end", None)
+    if not start_or_end:
+        start_or_end = questionary.select(
+            "Would you like to start or end the Gud tutorial?",
+            ["Start", "End"]
+        ).ask()
+        if start_or_end is None:
+            return
+        start_or_end = start_or_end.lower()
+
+    if start_or_end == "start" and invocation.repo.tutorial_is_active:
+        sys.exit("The tutorial is already active.\nPlease end it with `gud tutorial end` before trying to start it again.")
+
+    if start_or_end == "end" and not invocation.repo.tutorial_is_active:
+        sys.exit("The tutorial is not currently active, so you cannot end it.")
+
+    """
+    by this point, the Invocation object should have created the tutorial folder and Gud repo
+    inside of it, so no need to check for args or errors here
+    """
