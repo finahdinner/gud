@@ -1,0 +1,26 @@
+[
+    {
+        "instruction_lines": [
+            "Welcome to Gud!",
+            "If you've used Git before, you'll be familiar with a lot of the functionality of Gud.",
+            "If you haven't used Git before, just know that Gud (and Git) are pieces of software\nused to track changes and swap between versions of software.",
+            "At each stage of this tutorial, I will be letting you know the next command(s) to use, and will briefly explain what they each do.",
+            "To begin the tutorial, use the following commands:",
+            "cd gud_tutorial\t - This changes your directory to `gud_tutorial/`, which has just been made",
+            "gud init\t - This initialises the repository, stored in a `.gud`, which will handle all the changes and settings in your repository."
+        ],
+        "completed": false,
+        "command_text": ""
+    }
+
+
+
+
+
+
+
+
+
+
+
+]
