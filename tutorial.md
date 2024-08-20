@@ -39,4 +39,24 @@ Quick notes before starting:
    <br>Use the command `gud stage` - Gud will ask if you wish to _add_ or _remove_ a file from the stage - Select `view` - Type in `notes.txt`, and notice how it shows you auto-fill suggestions.
    <br>**Press tab** if you wish to let it autocomplete for you. - Press enter to confirm your selection. - Press enter again to confirm that you have no other files to add.
 10. You should now be back at your terminal prompt.
-    <br>Use `gud status` to check the status of your files now - Notice how it says that _notes.txt_
+    <br>Use `gud status` to check the status of your files now.
+    - Your output should look similar to below:
+    ![image](https://github.com/user-attachments/assets/5f8f6619-24b7-4dfb-b24e-fd3ce531551f)
+    - This is effectively saying that, next time you make a *commit* (which is in the next step), *notes.txt* will be included in that *commit*.
+11. Use the command `gud commit`
+    - It will now prompt you to include a message for this commit. You would normally *describe* what changes you have made since the last commit.
+    <br>Write something like "added notes.txt", and then press Enter.
+12. "Committing" file(s) like this, is effectively creating a *snapshot* in time. At some point in the future you could go back to the files, and restore them to the state that they were in at the time of this commit. Pretty nifty - more on this later!
+13. Use the command `gud log`
+    - Press enter, and you should see something like this:
+    ![image](https://github.com/user-attachments/assets/be3349e9-2c0a-4901-9f56-434ab29aa40b)
+    - This shows you *all* of your previous commits, and is helpful for seeing what changes have been made in the past.
+    - If you find yourself stuck in a window (most likely if you are on Mac or Linux), **press q to exit**.
+14. Let's create another commit.
+    <br>Use the command `gud stage add project`
+    - This is a shorthand version of what we did earlier. This time, we're telling Gud that we want to include the entire *project* folder in our next commit.
+15. Use the command `gud commit` and provide a commit message. Something like "added project folder" should be fine.
+16. Use the command `gud log`
+    - You will notice that the log has been updated with your most previous commit - good stuff!
+   
+#### So why are we doing all of this? What is the point of this software?
