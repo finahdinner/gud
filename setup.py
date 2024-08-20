@@ -17,11 +17,11 @@ setup(
         'gud': [
             'defaults/config',
             'defaults/gudignore',
-            "tutorial/checklist.json",
-            "tutorial/tutorial/notes.txt",
-            "tutorial/tutorial/README.md",
-            "tutorial/tutorial/project/main.py",
-            "tutorial/tutorial/project/vars.py",
+            "tutorial/tutorial_checklist.json",
+            "tutorial/gud_tutorial/notes.txt",
+            "tutorial/gud_tutorial/README.md",
+            "tutorial/gud_tutorial/project/main.py",
+            "tutorial/gud_tutorial/project/vars.py",
         ],
     },
     entry_points={

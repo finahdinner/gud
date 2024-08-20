@@ -36,30 +36,31 @@ class CommandInvocation:
             self.repo = Repository(cwd, create_new_repo=True)
         elif self.command == "tutorial":
             if self.args["start_or_end"][0] == "start":      
-                tutorial_repo_root = os.path.join(cwd, "tutorial")
-                tutorial_boilerplate_folder_path = get_file_path_from_package_installation(os.path.join("tutorial", "tutorial"))
+                tutorial_repo_root = os.path.join(cwd, "gud_tutorial")
+                tutorial_boilerplate_folder_path = get_file_path_from_package_installation(os.path.join("tutorial", "gud_tutorial"))
                 if not tutorial_boilerplate_folder_path:
                     sys.exit("Unable to find default tutorial folder. Possibly corrupted installation.")
                 try:
                     shutil.copytree(tutorial_boilerplate_folder_path, tutorial_repo_root)
                 except FileExistsError:
-                    print_red("A folder called `tutorial` already exists (possibly because you already started the tutorial?)")
+                    print_red("A folder called `gud_tutorial` already exists (possibly because you already started the tutorial?)")
                     print_dark_grey("Please delete it or `cd` (or open the terminal) elsewhere before starting the tutorial.")
                     sys.exit()
                 else:
+                    # create the repo with default options
                     self.repo = Repository(tutorial_repo_root, create_new_repo=True, tutorial_repo=True)
+                    self.repo.create_repo()
+                    self.repo.copy_global_to_repo_config()
             elif self.args["start_or_end"][0] == "end":
                 # should check to see if the user is in the tutorial repo
-                self.repo = Repository(cwd)
-                if not self.repo.is_tutorial_repo:
-                    print_red("You are not in a tutorial repository, so cannot use `gud tutorial end`")
+                if not os.path.exists(os.path.join(cwd, ".gud", "tutorial_checklist.json")):
+                    print_red("You are not in a tutorial repository, so cannot use `gud tutorial end`.")
+                    print_dark_grey("Navigate to the `gud_tutorial` folder first.")
                     sys.exit()
-                # change working dir to one path up
-                tutorial_repo_root = os.getcwd()
-                os.chdir(os.path.dirname(tutorial_repo_root))
-                # delete the tutorial folder you were in
-                shutil.rmtree(tutorial_repo_root)
+                # delete the whole tutorial folder you are in
+                shutil.rmtree(cwd)
                 print_green("Gud tutorial successfully ended.")
+                print_dark_grey("Use `cd ..` to return back to your initial directory.")
                 sys.exit()
         else:
             self.repo = Repository(cwd)
@@ -138,7 +139,7 @@ class Repository:
         with open(index_path, "w", encoding="utf-8") as f:
             pass
         if self.is_tutorial_repo:
-            tutorial_marker_file_path = os.path.join(self.path, "tutorial_checklist")
+            tutorial_marker_file_path = os.path.join(self.path, "tutorial_checklist.json")
             default_tutorial_marker_path = get_file_path_from_package_installation(os.path.join("tutorial", "tutorial_checklist.json"))
             if not default_tutorial_marker_path:
                 sys.exit("Unable to find default tutorial checklist. Possibly corrupted installation.")
